@@ -61,6 +61,7 @@
 
         examples: [
             { input: "1 2", output: "3" },
+            { input: "100 200", output: "300" },
         ],
 
         testCases: testCases,

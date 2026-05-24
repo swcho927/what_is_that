@@ -110,9 +110,12 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
     let linesArr     = code.split("\n");
     const memLimitBytes = memLimitMB * 1024 * 1024;
     const startTime     = Date.now();
+    let stepCount       = 0;  // ★ 스텝 카운터
 
     try {
         while (pc >= 0 && pc < linesArr.length) {
+            stepCount++;  // ★ 매 줄 실행마다 카운트
+
             if (Date.now() - startTime > timeLimitMs) {
                 return { output: outputBuffer.trim(), verdict: "TLE" };
             }
@@ -162,7 +165,8 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
         }
 
         const elapsed = Date.now() - startTime;
-        console.log(`실행 시간: ${elapsed}ms`);
+        // ★ 스텝 수, 실행 시간, 초당 스텝 수 출력
+        console.log(`실행 시간: ${elapsed}ms | 스텝 수: ${stepCount} | 초당: ${Math.round(stepCount / elapsed * 1000).toLocaleString()}스텝/초`);
 
         return { output: outputBuffer.trim(), verdict: "AC" };
 
@@ -246,7 +250,8 @@ function getPyEditorValue(probId) {
 //  3. 파이썬 모드
 // ════════════════════════════════════════════════════════
 
-var ADMIN_HASH = "905e8270550625954fab4e3515024b924ca20c3c0da3989252e0e42f8447a582";
+var ADMIN_HASH1 = "905e8270550625954fab4e3515024b924ca20c3c0da3989252e0e42f8447a582";
+var ADMIN_HASH2 = "18006e2ca1c2129392c66d87334bd2452c572058d406b4e85f43c1f72def10f5";
 var pyodideInstance = null;
 var pyodideLoading  = false;
 
@@ -428,7 +433,7 @@ async function submitCode(probId) {
     if (!code) { alert("코드를 입력해주세요."); return; }
 
     var inputHash = await hashPassword(code);
-    if (inputHash === ADMIN_HASH) {
+    if (inputHash === ADMIN_HASH1 || inputHash === ADMIN_HASH2) {
         activatePythonMode(probId);
         return;
     }
@@ -551,7 +556,6 @@ async function activatePythonMode(probId) {
 
     judgeArea.insertBefore(pySection, judgeArea.firstChild);
 
-    // CodeMirror 로드 후 파이썬 에디터에만 적용
     await loadCodeMirror();
     var textarea = document.getElementById("pyEditor-" + probId);
     if (textarea && window.CodeMirror) {

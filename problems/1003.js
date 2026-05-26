@@ -64,7 +64,7 @@
         timeLimit:   1,
         memoryLimit: 256,
 
-        tier: { name: "Silver", level: "V" },
+        tier: { name: "Silver", level: "IV" },
 
         description: "두 정수를 입력 받아 두 수의 나눗셈 결과를 출력하시오.",
         inputDesc:   "첫째 줄에 A, B가 공백으로 구분하여 주어진다. (1 ≤ A, B ≤ 10,000)",

@@ -5,7 +5,7 @@ window.PROBLEMS['1006'] = {
     timeLimit:   1,
     memoryLimit: 256,
 
-    tier: { name: "Silver", level: "IV" },
+    tier: { name: "Silver", level: "V" },
 
     description: "정수 N이 주어졌을 때, N번째 피보나치 수를 출력하시오.",
     inputDesc:   "첫째 줄에 N이 주어진다. (1 ≤ N ≤ 30)",

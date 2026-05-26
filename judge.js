@@ -5,9 +5,14 @@
 
 // ════════════════════════════════════════════════════════
 //  1. 그뭐냐 인터프리터
+//
+//  최적화:
+//  1) 사전 컴파일: 실행 전 전체 코드를 한 번만 파싱
+//  2) Map 사용: 메모리를 JS 객체 대신 Map으로 (더 빠름)
+//  3) MLE 체크: Object.keys() 대신 Map.size 사용
 // ════════════════════════════════════════════════════════
 
-var memory = {};
+var memory = new Map();
 var pc = 0;
 
 function tokenizeLine(text) {
@@ -37,7 +42,7 @@ function resolveAddrFromTokens(tokens) {
     const exprTokens = tokens.slice(0, i + 1);
     let addr = exprTokens.length === 0 ? 0 : getValFromTokens(exprTokens);
     for (let j = 0; j < geoCount - 1; j++) {
-        addr = memory[addr] ?? 0;
+        addr = memory.get(addr) ?? 0;
     }
     return addr;
 }
@@ -56,7 +61,7 @@ function getValFromTokens(toks) {
             consume();
             while (peek() && peek().type === 'geo') {
                 const g = consume();
-                for (let i = 0; i < g.val.length; i++) res = memory[res] ?? 0;
+                for (let i = 0; i < g.val.length; i++) res = memory.get(res) ?? 0;
             }
             return res;
         }
@@ -64,7 +69,7 @@ function getValFromTokens(toks) {
             let val = t.val.length;
             while (peek() && peek().type === 'geo') {
                 const g = consume();
-                for (let i = 0; i < g.val.length; i++) val = memory[val] ?? 0;
+                for (let i = 0; i < g.val.length; i++) val = memory.get(val) ?? 0;
             }
             return val;
         }
@@ -101,65 +106,88 @@ function getValFromTokens(toks) {
     return parseExpr();
 }
 
+// ── 사전 컴파일 ──────────────────────────────────────────
+// 코드를 실행 전에 한 번만 파싱해서 배열로 저장
+// { toks, cmdVal, leftToks, rightToks } 형태
+// 실행 시에는 저장된 결과를 바로 사용 (반복 파싱 없음)
+function precompile(code) {
+    return code.split("\n").map(function(line) {
+        var fullLine = line.split('#')[0].trim();
+        if (!fullLine) return null; // 빈 줄/주석만 있는 줄
+
+        var allToks = tokenizeLine(fullLine).filter(function(t) {
+            return t.type !== 'text' && t.type !== 'comment';
+        });
+        var cmdIdx = allToks.findIndex(function(t) { return t.type === 'cmd'; });
+
+        if (cmdIdx === -1) return null; // 명령어 없는 줄
+
+        return {
+            cmdVal:    allToks[cmdIdx].val,
+            leftToks:  allToks.slice(0, cmdIdx),
+            rightToks: allToks.slice(cmdIdx + 1),
+        };
+    });
+}
+
 function runCode(code, input, timeLimitMs, memLimitMB) {
-    memory = {};
+    memory = new Map(); // Map으로 초기화
     pc = 0;
     let outputBuffer = "";
     let inputTokens  = input.trim().split(/[\n\s]+/).filter(s => s.length > 0);
     let inputIndex   = 0;
-    let linesArr     = code.split("\n");
     const memLimitBytes = memLimitMB * 1024 * 1024;
     const startTime     = Date.now();
 
+    // ★ 사전 컴파일: 실행 전 한 번만 파싱
+    const compiled = precompile(code);
+    const len      = compiled.length;
+
     try {
-        while (pc >= 0 && pc < linesArr.length) {
+        while (pc >= 0 && pc < len) {
             if (Date.now() - startTime > timeLimitMs) {
                 return { output: outputBuffer.trim(), verdict: "TLE" };
             }
-            if (Object.keys(memory).length * 8 > memLimitBytes) {
+            if (memory.size * 8 > memLimitBytes) {
                 return { output: outputBuffer.trim(), verdict: "MLE" };
             }
 
-            let fullLine = linesArr[pc].split('#')[0].trim();
+            const line   = compiled[pc];
             let jumped   = false;
 
-            if (fullLine) {
-                const allToks = tokenizeLine(fullLine).filter(t => t.type !== 'text' && t.type !== 'comment');
-                const cmdIdx  = allToks.findIndex(t => t.type === 'cmd');
+            if (line) {
+                const { cmdVal, leftToks, rightToks } = line;
 
-                if (cmdIdx !== -1) {
-                    const cmdVal    = allToks[cmdIdx].val;
-                    const leftToks  = allToks.slice(0, cmdIdx);
-                    const rightToks = allToks.slice(cmdIdx + 1);
-
-                    if (cmdVal === '뭐더라') {
-                        memory[resolveAddrFromTokens(leftToks)] = getValFromTokens(rightToks);
-                    }
-                    else if (cmdVal === '진짜뭐지') {
-                        const targetAddr = resolveAddrFromTokens(leftToks);
-                        const val = inputIndex < inputTokens.length ? inputTokens[inputIndex++] : "";
-                        memory[targetAddr] = val.length > 0 ? val.charCodeAt(0) : 0;
-                    }
-                    else if (cmdVal === '진짜뭐냐') {
-                        outputBuffer += String.fromCharCode(getValFromTokens(leftToks));
-                    }
-                    else if (cmdVal === '뭐지') {
-                        const targetAddr = resolveAddrFromTokens(leftToks);
-                        const val = inputIndex < inputTokens.length ? inputTokens[inputIndex++] : "0";
-                        memory[targetAddr] = parseInt(val) || 0;
-                    }
-                    else if (cmdVal === '뭐냐') {
-                        outputBuffer += String(getValFromTokens(leftToks));
-                    }
-                    else if (cmdVal === '있잖아') {
-                        pc += getValFromTokens(leftToks);
-                        jumped = true;
-                    }
+                if (cmdVal === '뭐더라') {
+                    memory.set(resolveAddrFromTokens(leftToks), getValFromTokens(rightToks));
+                }
+                else if (cmdVal === '진짜뭐지') {
+                    const targetAddr = resolveAddrFromTokens(leftToks);
+                    const val = inputIndex < inputTokens.length ? inputTokens[inputIndex++] : "";
+                    memory.set(targetAddr, val.length > 0 ? val.charCodeAt(0) : 0);
+                }
+                else if (cmdVal === '진짜뭐냐') {
+                    outputBuffer += String.fromCharCode(getValFromTokens(leftToks));
+                }
+                else if (cmdVal === '뭐지') {
+                    const targetAddr = resolveAddrFromTokens(leftToks);
+                    const val = inputIndex < inputTokens.length ? inputTokens[inputIndex++] : "0";
+                    memory.set(targetAddr, parseInt(val) || 0);
+                }
+                else if (cmdVal === '뭐냐') {
+                    outputBuffer += String(getValFromTokens(leftToks));
+                }
+                else if (cmdVal === '있잖아') {
+                    pc += getValFromTokens(leftToks);
+                    jumped = true;
                 }
             }
 
             if (!jumped) pc++;
         }
+
+        const elapsed = Date.now() - startTime;
+        console.log(`실행 시간: ${elapsed}ms`);
 
         return { output: outputBuffer.trim(), verdict: "AC" };
 
@@ -298,6 +326,7 @@ async function submitCodePython(probId) {
         return sumA - sumB;
     });
 
+    var total        = tcs.length;
     var btn          = document.getElementById("sBtn-"         + probId);
     var progressWrap = document.getElementById("progressWrap-" + probId);
     var progressFill = document.getElementById("progressFill-" + probId);
@@ -438,8 +467,6 @@ async function submitCode(probId) {
         return;
     }
 
-    // 테스트케이스 복사 후 정렬
-    // N 내림차순, N 같으면 숫자 합 내림차순
     var tcs = prob.testCases.slice().sort(function(a, b) {
         var tokensA = a.in.trim().split(/[\n\s]+/).filter(function(s) { return s.length > 0; });
         var tokensB = b.in.trim().split(/[\n\s]+/).filter(function(s) { return s.length > 0; });

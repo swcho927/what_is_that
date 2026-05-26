@@ -54,6 +54,7 @@ function getValFromTokens(toks) {
     const peek    = () => toks[pos];
 
     function parseAtom() {
+        if (peek() && peek().type === 'bracket' && peek().val === '어') return 0;
         let t = consume();
         if (!t) return 0;
         if (t.type === 'bracket' && t.val === '아') {

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>랭킹 - 그 뭐냐 Judge</title>
+    <link rel="stylesheet" href="style.css">
+    <script>window.PROBLEMS = window.PROBLEMS || {};</script>
+    <style>
+        .ranking-container {
+            max-width: 900px;
+            margin: 80px auto cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px;
+        }
+        .ranking-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+        }
+        .ranking-table th, .ranking-table td {
+            padding: 14px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .ranking-table th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .ranking-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .ranking-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .rank-number {
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+        .rank-1 { color: #ffd700; } /* 금메달 효과 */
+        .rank-2 { color: #c0c0c0; } /* 은메달 효과 */
+        .rank-3 { color: #cd7f32; } /* 동메달 효과 */
+        
+        .rank-nickname {
+            font-weight: 700;
+            color: var(--text);
+        }
+        .rank-rating {
+            font-weight: 800;
+            color: var(--blue);
+        }
+        .tier-text {
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+        #ranking-loading {
+            text-align: center;
+            color: var(--text-muted);
+            font-weight: bold;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
+    <div class="topbar-divider"></div>
+    <span class="topbar-sub">실시간 유저 랭킹</span>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+        <span id="user-info" style="display:none; font-size:0.82rem; color:var(--text-muted);"></span>
+        <button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>
+        <button id="btn-signup" class="topbar-btn topbar-btn-primary" onclick="location.href='signup.html'">회원가입</button>
+        <button id="btn-logout" class="topbar-btn" style="display:none;">로그아웃</button>
+    </div>
+</div>
+
+<div class="ranking-container">
+    <h1 class="ranking-title">🏆 전적 랭킹</h1>
+    
+    <div id="ranking-loading">모든 유저의 레이팅 데이터를 계산하는 중...</div>
+    
+    <table class="ranking-table" id="ranking-table" style="display: none;">
+        <thead>
+            <tr>
+                <th style="width: 15%;">등수</th>
+                <th style="width: 40%;">닉네임</th>
+                <th style="width: 25%;">티어</th>
+                <th style="width: 20%;">레이팅</th>
+            </tr>
+        </thead>
+        <tbody id="ranking-tbody">
+            </tbody>
+    </table>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
+        authDomain:        "what-is-that-3cc48.firebaseapp.com",
+        projectId:         "what-is-that-3cc48",
+        storageBucket:     "what-is-that-3cc48.firebasestorage.app",
+        messagingSenderId: "745704527046",
+        appId:             "1:745704527046:web:1ef97739fdc1348c96b3c7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const PROBLEM_TIER_REWARDS = {
+        "Bronze V": 1, "Bronze IV": 2, "Bronze III": 3, "Bronze II": 4, "Bronze I": 5,
+        "Silver V": 6, "Silver IV": 8, "Silver III": 10, "Silver II": 12, "Silver I": 14,
+        "Gold V": 15, "Gold IV": 18, "Gold III": 21, "Gold II": 24, "Gold I": 27,
+        "Platinum V": 32, "Platinum IV": 36, "Platinum III": 40, "Platinum II": 44, "Platinum I": 48,
+        "Diamond V": 60, "Diamond IV": 65, "Diamond III": 70, "Diamond II": 75, "Diamond I": 80,
+        "Ruby V": 100, "Ruby IV": 110, "Ruby III": 120, "Ruby II": 130, "Ruby I": 140
+    };
+
+    const TIERS = [
+        { name: "Bronze V", min: 0, color: "#ad5600" }, { name: "Bronze IV", min: 40, color: "#ad5600" }, { name: "Bronze III", min: 60, color: "#ad5600" }, { name: "Bronze II", min: 80, color: "#ad5600" }, { name: "Bronze I", min: 100, color: "#ad5600" },
+        { name: "Silver V", min: 120, color: "#435f7a" }, { name: "Silver IV", min: 160, color: "#435f7a" }, { name: "Silver III", min: 200, color: "#435f7a" }, { name: "Silver II", min: 240, color: "#435f7a" }, { name: "Silver I", min: 280, color: "#435f7a" },
+        { name: "Gold V", min: 300, color: "#ec9a00" }, { name: "Gold IV", min: 360, color: "#ec9a00" }, { name: "Gold III", min: 420, color: "#ec9a00" }, { name: "Gold II", min: 480, color: "#ec9a00" }, { name: "Gold I", min: 540, color: "#ec9a00" },
+        { name: "Platinum V", min: 640, color: "#27e2a4" }, { name: "Platinum IV", min: 720, color: "#27e2a4" }, { name: "Platinum III", min: 800, color: "#27e2a4" }, { name: "Platinum II", min: 880, color: "#27e2a4" }, { name: "Platinum I", min: 960, color: "#27e2a4" },
+        { name: "Diamond V", min: 1200, color: "#00b4fc" }, { name: "Diamond IV", min: 1300, color: "#00b4fc" }, { name: "Diamond III", min: 1400, color: "#00b4fc" }, { name: "Diamond II", min: 1500, color: "#00b4fc" }, { name: "Diamond I", min: 1600, color: "#00b4fc" },
+        { name: "Ruby V", min: 2000, color: "#ff0062" }, { name: "Ruby IV", min: 2200, color: "#ff0062" }, { name: "Ruby III", min: 2400, color: "#ff0062" }, { name: "Ruby II", min: 2600, color: "#ff0062" }, { name: "Ruby I", min: 2800, color: "#ff0062" }
+    ];
+
+    // 문제 스크립트 로드 함수
+    function loadProblemScript(probId) {
+        return new Promise((resolve) => {
+            if (window.PROBLEMS && window.PROBLEMS[probId]) { resolve(); return; }
+            const script = document.createElement('script');
+            script.src = `problems/${probId}.js`;
+            script.onload = () => resolve();
+            script.onerror = () => { resolve(); }; // 실패하더라도 멈추지 않음
+            document.head.appendChild(script);
+        });
+    }
+
+    // 상단바 로그인 세션 감시
+    onAuthStateChanged(auth, (user) => {
+        const userInfo = document.getElementById('user-info');
+        const btnLogin = document.getElementById('btn-login');
+        const btnSignup = document.getElementById('btn-signup');
+        const btnLogout = document.getElementById('btn-logout');
+
+        if (user) {
+            userInfo.innerHTML = `<a href="profile.html" style="color: var(--blue); text-decoration: none; font-weight: bold; cursor: pointer;">${user.displayName || user.email}</a>`;
+            userInfo.style.display = 'inline-block';
+            if (btnLogin) btnLogin.style.display = 'none';
+            if (btnSignup) btnSignup.style.display = 'none';
+            if (btnLogout) btnLogout.style.display = 'inline-block';
+        } else {
+            if (userInfo) userInfo.style.display = 'none';
+            if (btnLogin) btnLogin.style.display = 'inline-block';
+            if (btnSignup) btnSignup.style.display = 'inline-block';
+            if (btnLogout) btnLogout.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const logoutBtn = document.getElementById('btn-logout');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                signOut(auth).then(() => location.href = 'index.html');
+            });
+        }
+        loadRankingData();
+    });
+
+    // 전 전체 유저 불러오기 및 실시간 랭킹 연산 함수
+    async function loadRankingData() {
+        try {
+            const querySnapshot = await getDocs(collection(db, "users"));
+            let allUniqueProblems = new Set();
+            let usersData = [];
+
+            // 1. 데이터 수집 및 모든 유저가 푼 유니크 문제 목록 취합
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const solvedProblems = data.solvedProblems || [];
+                solvedProblems.forEach(id => allUniqueProblems.add(id));
+                
+                usersData.push({
+                    nickname: data.nickname || data.email || "익명",
+                    solvedProblems: solvedProblems
+                });
+            });
+
+            // 2. 랭킹에 필요한 문제 스크립트 일괄 비동기 로드 (최적화)
+            await Promise.all(Array.from(allUniqueProblems).map(id => loadProblemScript(id)));
+
+            // 3. 각 유저별 실시간 레이팅 계산 및 티어 매칭
+            let rankedUsers = usersData.map(u => {
+                let rating = 0;
+                u.solvedProblems.forEach(id => {
+                    const p = window.PROBLEMS[id];
+                    if (p && p.tier) {
+                        rating += PROBLEM_TIER_REWARDS[`${p.tier.name} ${p.tier.level}`] || 0;
+                    }
+                });
+
+                let tierIdx = TIERS.findIndex((t, idx) => rating >= t.min && (idx === TIERS.length - 1 || rating < TIERS[idx + 1].min));
+                if (tierIdx === -1) tierIdx = 0;
+
+                return {
+                    nickname: u.nickname,
+                    rating: rating,
+                    tierName: TIERS[tierIdx].name,
+                    tierColor: TIERS[tierIdx].color
+                };
+            });
+
+            // 4. 레이팅 기준 내림차순 정렬
+            rankedUsers.sort((a, b) => b.rating - a.rating);
+
+            // 5. 표에 바인딩 및 화면 노출
+            const tbody = document.getElementById('ranking-tbody');
+            tbody.innerHTML = "";
+
+            rankedUsers.forEach((user, index) => {
+                const rank = index + 1;
+                let rankClass = "";
+                if (rank <= 3) rankClass = `rank-${rank}`; // 1, 2, 3등 메달 색상 효과
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="rank-number ${rankClass}">${rank}</td>
+                    <td class="rank-nickname">${user.nickname}</td>
+                    <td class="tier-text" style="color: ${user.tierColor};">${user.tierName}</td>
+                    <td class="rank-rating">${user.rating} 점</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('ranking-loading').style.display = 'none';
+            document.getElementById('ranking-table').style.display = 'table';
+
+        } catch (e) {
+            console.error(e);
+            document.getElementById('ranking-loading').textContent = "랭킹 데이터를 불러오는 중 치명적인 오류가 발생했습니다.";
+        }
+    }
+</script>
+</body>
+</html>

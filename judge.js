@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════
-//  judge.js  ─  그뭐냐 채점 엔진 (레이팅 중복방지 + 성공 마커 추가)
+//  judge.js  ─  그뭐냐 채점 엔진 (성공 박스 마커 반영 / 팝업 전면 제거)
 // ════════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
@@ -28,25 +28,24 @@ const PROBLEM_TIER_REWARDS = {
     "Ruby V": 100,    "Ruby IV": 110,    "Ruby III": 120,   "Ruby II": 130,   "Ruby I": 140
 };
 
-// 🌟 [유저 상태 감시] judge.html 상단바 닉네임 연동 및 문제 리스트 성공 마커 실시간 반영
+// 유저 상태 감시 및 성공 마커 노출
 onAuthStateChanged(auth, async (user) => {
     const userInfo = document.getElementById('user-info');
     if (user) {
-        // 1) 상단바 닉네임 노출 및 링크 연결
         const displayName = user.displayName || "유저";
         if (userInfo) {
             userInfo.innerHTML = `<a href="profile.html" style="color: var(--blue); text-decoration: none; font-weight: bold; cursor: pointer;">${displayName}</a>`;
             userInfo.style.display = 'inline-block';
         }
 
-        // 2) 데이터베이스에서 풀었던 문제 목록 긁어와서 사이드바에 체크 표시(✔) 남기기
         try {
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (userDoc.exists()) {
                 const solvedProblems = userDoc.data().solvedProblems || [];
                 solvedProblems.forEach(probId => {
                     const marker = document.getElementById(`solved-marker-${probId}`);
-                    if (marker) marker.style.display = 'inline';
+                    // 이미 맞춘 문제는 로딩될 때 'inline-block'으로 보여줌
+                    if (marker) marker.style.display = 'inline-block';
                 });
             }
         } catch (e) {
@@ -57,7 +56,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// 🌟 [레이팅 적립 및 중복 차단]
+// 레이팅 적립 로직 (팝업창 전면 제거)
 async function awardRating(prob) {
     const user = auth.currentUser;
     if (!user) return;
@@ -74,25 +73,22 @@ async function awardRating(prob) {
         if (userDoc.exists()) {
             const solvedProblems = userDoc.data().solvedProblems || [];
             
-            // 🚨 이미 푼 적이 있는 문제라면 레이팅 적립 전면 차단
+            // 🚨 [수정] 다시 푼 문제일 때 띄우던 alert 팝업 삭제
             if (solvedProblems.includes(String(prob.id))) {
-                alert("이미 해결한 문제입니다. 레이팅은 중복 지급되지 않습니다. 🔄");
-                return;
+                return; 
             }
         }
 
         if (pointsToAdd > 0) {
-            // 새롭게 문제를 맞춘 경우에만 점수를 올리고 solvedProblems 배열에 문제 ID 추가
             await updateDoc(userRef, {
                 rating: increment(pointsToAdd),
                 solvedProblems: arrayUnion(String(prob.id))
             });
             
-            // 실시간으로 사이드바에 초록색 체크 표시 등장시키기
             const marker = document.getElementById(`solved-marker-${prob.id}`);
-            if (marker) marker.style.display = 'inline';
+            if (marker) marker.style.display = 'inline-block';
 
-            alert(`정답입니다! 레이팅이 +${pointsToAdd} 증가했습니다. 🎉`);
+            // 🚨 [수정] 정답 맞췄을 때 띄우던 alert 팝업 삭제
         }
     } catch (e) {
         console.error("레이팅 동기화 처리 에러:", e);
@@ -755,11 +751,12 @@ document.addEventListener('DOMContentLoaded', function () {
         tabEl.className = 'sidebar-item' + (isFirst ? ' active' : '');
         tabEl.id        = 'tab-' + probId;
         tabEl.setAttribute('onclick', "switchProblem('" + probId + "')");
-        // 🌟 성공 표시 마커 태그(id="solved-marker-ID")를 뼈대에 기본 주입 (평소엔 display:none)
+        
+        // 🌟 [수정 1] 체크 표시 대신 초록색 '성공' 보더 박스 디자인 적용 (기본 숨김)
         tabEl.innerHTML =
             '<span class="sidebar-num">'    + prob.id    + '</span>' +
             '<span class="sidebar-title">' + prob.title + '</span>' +
-            '<span class="solved-marker" id="solved-marker-' + probId + '" style="display:none; color:#3fb950; font-weight:bold; margin-right:6px;">✔</span>' +
+            '<span class="solved-marker" id="solved-marker-' + probId + '" style="display:none; color:#3fb950; border:1px solid #3fb950; padding:1px 5px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-right:8px; vertical-align:middle; line-height:1;">성공</span>' +
             (tc ? '<span class="tier-badge ' + tc + '">' + tl + '</span>' : '');
         sidebarList.appendChild(tabEl);
 

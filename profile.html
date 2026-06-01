@@ -79,20 +79,20 @@
             margin-bottom: 8px;
             font-weight: bold;
         }
+        /* 🌟 [버그 수정 2] 게이지 바 컴포넌트 강제 노출을 위한 CSS 정밀 교정 */
         .rating-bar-bg {
             width: 100%;
-            height: 16px;
-            background: #161b22;
-            border-radius: 20px;
+            height: 14px;              /* 바 두께 확보 */
+            background: #21262d;       /* 확실하게 눈에 띄는 배경색 부여 */
+            border-radius: 10px;
             overflow: hidden;
-            border: 1px solid var(--border);
-            padding: 2px;
+            border: 1px solid #30363d;
             box-sizing: border-box;
         }
         .rating-bar-fill {
             height: 100%;
             width: 0%; 
-            border-radius: 20px;
+            border-radius: 10px;
             transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #loading {
@@ -166,7 +166,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 디렉터님이 협의 완료하신 계정 컷라인 밸런스 테이블 (누적 레이팅 기준)
     const TIERS = [
         { name: "Bronze V",   min: 0,    color: "#ad5600" },
         { name: "Bronze IV",  min: 15,   color: "#ad5600" },
@@ -217,7 +216,7 @@
             let rating = 0;
             let nickname = user.displayName || "익명";
             let solvedCount = 0;
-            let formattedDate = "기록 없음";
+            let formattedDate = "-";
 
             if (userDoc.exists()) {
                 const data = userDoc.data();
@@ -231,7 +230,6 @@
                 }
             }
 
-            // 레이팅 연동 티어 산출
             let currentTier = TIERS[0];
             for (let i = TIERS.length - 1; i >= 0; i--) {
                 if (rating >= TIERS[i].min) {
@@ -240,7 +238,6 @@
                 }
             }
 
-            // 데이터 맵핑
             document.getElementById('prof-nickname').textContent = nickname;
             document.getElementById('tier-name').textContent = currentTier.name;
             document.getElementById('tier-name').style.color = currentTier.color;
@@ -248,12 +245,12 @@
             document.getElementById('stat-solved').textContent = `${solvedCount} 개`;
             document.getElementById('stat-date').textContent = formattedDate;
             
-            // 게이지 계산 (Ruby I 만점 6100점 기준 비율)
             const progress = Math.min((rating / 6100) * 100, 100).toFixed(1);
             document.getElementById('progress-percent').textContent = progress + '%';
             
             const bar = document.getElementById('rating-bar');
             bar.style.backgroundColor = currentTier.color;
+            // 확실하게 width가 채워지도록 스타일 바인딩 강제 집행
             setTimeout(() => { bar.style.width = progress + '%'; }, 100);
 
             document.getElementById('loading').style.display = 'none';

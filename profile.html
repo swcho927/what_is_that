@@ -283,6 +283,7 @@
                         if (prob && prob.tier && prob.tier.name && prob.tier.level) {
                             const tierKey = prob.tier.name + " " + prob.tier.level; // "Gold II" 생성
                             rating += PROBLEM_TIER_REWARDS[tierKey] || 0;
+                            console.log(rating);
                         }
                     });
                 }

@@ -11,6 +11,7 @@
             align-items: center;
             min-height: calc(100vh - 52px);
             margin-top: 52px;
+            padding: 20px;
         }
         .profile-card {
             background: var(--bg-card);
@@ -18,44 +19,86 @@
             border-radius: 16px;
             padding: 40px;
             width: 100%;
-            max-width: 500px;
-            text-align: center;
+            max-width: 550px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+        }
+        .profile-header-ui {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
         }
         .profile-nickname {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 900;
             color: var(--text);
-            margin-bottom: 10px;
+            letter-spacing: -1px;
         }
-        .rating-section {
-            margin-top: 30px;
+        .tier-tag {
+            font-size: 1.3rem;
+            font-weight: 800;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 30px;
+            border: 1px solid currentColor;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .stat-box {
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: left;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+        .progress-section {
+            margin-top: 24px;
+        }
+        .progress-meta {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: bold;
         }
-        /* 레이팅 바 스타일 */
         .rating-bar-bg {
             width: 100%;
-            height: 12px;
-            background: var(--bg-main);
-            border-radius: 6px;
+            height: 16px;
+            background: #161b22;
+            border-radius: 20px;
             overflow: hidden;
             border: 1px solid var(--border);
+            padding: 2px;
+            box-sizing: border-box;
         }
         .rating-bar-fill {
             height: 100%;
-            width: 0%; /* JS에서 조절 */
-            transition: width 1s ease-in-out;
+            width: 0%; 
+            border-radius: 20px;
+            transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .tier-text {
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-        .rating-score {
-            font-size: 0.9rem;
+        #loading {
+            text-align: center;
             color: var(--text-muted);
+            font-weight: bold;
         }
     </style>
 </head>
@@ -64,21 +107,42 @@
 <div class="topbar">
     <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
     <div class="topbar-divider"></div>
-    <span class="topbar-sub">유저 프로필</span>
+    <span class="topbar-sub">유저 프로필 정보</span>
 </div>
 
 <div class="profile-wrap">
     <div class="profile-card">
-        <div id="loading">불러오는 중...</div>
+        <div id="loading">유저 인증 세션 및 데이터 로드 중...</div>
+        
         <div id="profile-content" style="display: none;">
-            <div class="profile-nickname" id="prof-nickname">닉네임</div>
+            <div class="profile-header-ui">
+                <div class="profile-nickname" id="prof-nickname">닉네임</div>
+                <div class="tier-tag" id="tier-name">Bronze V</div>
+            </div>
             
-            <div class="rating-section">
-                <div class="tier-text" id="tier-name">Bronze V</div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">🔥 현재 레이팅</div>
+                    <div class="stat-value" id="stat-rating">0 점</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">✅ 해결한 문제 수</div>
+                    <div class="stat-value" id="stat-solved">0 개</div>
+                </div>
+                <div class="stat-box" style="grid-column: span 2;">
+                    <div class="stat-label">📅 가입 일시</div>
+                    <div class="stat-value" id="stat-date" style="font-size:1rem; color:var(--text-muted)">-</div>
+                </div>
+            </div>
+
+            <div class="progress-section">
+                <div class="progress-meta">
+                    <span>랭킹 진행도</span>
+                    <span id="progress-percent">0%</span>
+                </div>
                 <div class="rating-bar-bg">
                     <div class="rating-bar-fill" id="rating-bar"></div>
                 </div>
-                <div class="rating-score" id="rating-val">Rating: 0</div>
             </div>
         </div>
     </div>
@@ -102,16 +166,43 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 티어 정보 설정 (백준 컬러 시스템)
+    // 디렉터님이 협의 완료하신 계정 컷라인 밸런스 테이블 (누적 레이팅 기준)
     const TIERS = [
         { name: "Bronze V",   min: 0,    color: "#ad5600" },
-        { name: "Bronze IV",  min: 30,   color: "#ad5600" },
-        { name: "Bronze III", min: 60,   color: "#ad5600" },
-        { name: "Bronze II",  min: 90,   color: "#ad5600" },
-        { name: "Bronze I",   min: 120,  color: "#ad5600" },
-        { name: "Silver V",   min: 150,  color: "#435f7a" },
-        { name: "Gold V",     min: 500,  color: "#ec9a00" },
-        { name: "Platinum V", min: 1000, color: "#27e2a4" }
+        { name: "Bronze IV",  min: 15,   color: "#ad5600" },
+        { name: "Bronze III", min: 35,   color: "#ad5600" },
+        { name: "Bronze II",  min: 60,   color: "#ad5600" },
+        { name: "Bronze I",   min: 90,   color: "#ad5600" },
+        
+        { name: "Silver V",   min: 125,  color: "#435f7a" },
+        { name: "Silver IV",  min: 165,  color: "#435f7a" },
+        { name: "Silver III", min: 210,  color: "#435f7a" },
+        { name: "Silver II",  min: 260,  color: "#435f7a" },
+        { name: "Silver I",   min: 315,  color: "#435f7a" },
+        
+        { name: "Gold V",     min: 380,  color: "#ec9a00" },
+        { name: "Gold IV",    min: 450,  color: "#ec9a00" },
+        { name: "Gold III",   min: 530,  color: "#ec9a00" },
+        { name: "Gold II",    min: 620,  color: "#ec9a00" },
+        { name: "Gold I",     min: 720,  color: "#ec9a00" },
+        
+        { name: "Platinum V", min: 850,  color: "#27e2a4" },
+        { name: "Platinum IV", min: 1000, color: "#27e2a4" },
+        { name: "Platinum III", min: 1170, color: "#27e2a4" },
+        { name: "Platinum II", min: 1360, color: "#27e2a4" },
+        { name: "Platinum I",  min: 1570, color: "#27e2a4" },
+        
+        { name: "Diamond V",  min: 1820, color: "#00b4fc" },
+        { name: "Diamond IV", min: 2100, color: "#00b4fc" },
+        { name: "Diamond III", min: 2410, color: "#00b4fc" },
+        { name: "Diamond II", min: 2750, color: "#00b4fc" },
+        { name: "Diamond I",  min: 3120, color: "#00b4fc" },
+        
+        { name: "Ruby V",     min: 3600, color: "#ff0062" },
+        { name: "Ruby IV",    min: 4150, color: "#ff0062" },
+        { name: "Ruby III",   min: 4750, color: "#ff0062" },
+        { name: "Ruby II",    min: 5400, color: "#ff0062" },
+        { name: "Ruby I",     min: 6100, color: "#ff0062" }
     ];
 
     onAuthStateChanged(auth, async (user) => {
@@ -122,17 +213,25 @@
         }
 
         try {
-            // Firestore에서 유저 데이터(레이팅) 가져오기
             const userDoc = await getDoc(doc(db, "users", user.uid));
             let rating = 0;
-            let nickname = user.displayName;
+            let nickname = user.displayName || "익명";
+            let solvedCount = 0;
+            let formattedDate = "기록 없음";
 
             if (userDoc.exists()) {
-                rating = userDoc.data().rating || 0;
-                nickname = userDoc.data().nickname || nickname;
+                const data = userDoc.data();
+                rating = data.rating ?? 0;
+                nickname = data.nickname || nickname;
+                solvedCount = data.solvedProblems ? data.solvedProblems.length : 0;
+                
+                if (data.joinedAt) {
+                    const dateObj = data.joinedAt.toDate ? data.joinedAt.toDate() : new Date(data.joinedAt);
+                    formattedDate = dateObj.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+                }
             }
 
-            // 레이팅에 따른 티어 계산
+            // 레이팅 연동 티어 산출
             let currentTier = TIERS[0];
             for (let i = TIERS.length - 1; i >= 0; i--) {
                 if (rating >= TIERS[i].min) {
@@ -141,17 +240,20 @@
                 }
             }
 
-            // UI 반영
+            // 데이터 맵핑
             document.getElementById('prof-nickname').textContent = nickname;
             document.getElementById('tier-name').textContent = currentTier.name;
             document.getElementById('tier-name').style.color = currentTier.color;
-            document.getElementById('rating-val').textContent = `Rating: ${rating}`;
+            document.getElementById('stat-rating').textContent = `${rating} 점`;
+            document.getElementById('stat-solved').textContent = `${solvedCount} 개`;
+            document.getElementById('stat-date').textContent = formattedDate;
             
-            // 바 컬러 및 애니메이션
+            // 게이지 계산 (Ruby I 만점 6100점 기준 비율)
+            const progress = Math.min((rating / 6100) * 100, 100).toFixed(1);
+            document.getElementById('progress-percent').textContent = progress + '%';
+            
             const bar = document.getElementById('rating-bar');
             bar.style.backgroundColor = currentTier.color;
-            // 게이지 계산 (예: 다음 티어까지의 진행도, 여기선 단순 시각화 위해 1500 만점 기준)
-            const progress = Math.min((rating / 1500) * 100, 100);
             setTimeout(() => { bar.style.width = progress + '%'; }, 100);
 
             document.getElementById('loading').style.display = 'none';
@@ -159,10 +261,9 @@
 
         } catch (e) {
             console.error(e);
-            alert("데이터를 불러오는데 실패했습니다.");
+            alert("프로필 대시보드 로드 중 치명적인 오류가 발생했습니다.");
         }
     });
 </script>
-
 </body>
 </html>

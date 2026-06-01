@@ -1,11 +1,10 @@
 // ════════════════════════════════════════════════════════
-//  judge.js  ─  그뭐냐 채점 엔진 (파이어베이스 레이팅 연동)
+//  judge.js  ─  그뭐냐 채점 엔진 (레이팅 중복방지 + 성공 마커 추가)
 // ════════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-import { getFirestore, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-// 디렉터님의 파이어베이스 프로젝트 키 정보 연동
 const firebaseConfig = {
     apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
     authDomain:        "what-is-that-3cc48.firebaseapp.com",
@@ -20,7 +19,6 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-// 🌟 디렉터님이 하달하신 문제 티어별 레이팅 증가량 매핑 테이블
 const PROBLEM_TIER_REWARDS = {
     "Bronze V": 1,   "Bronze IV": 2,   "Bronze III": 3,   "Bronze II": 4,   "Bronze I": 5,
     "Silver V": 6,   "Silver IV": 8,   "Silver III": 10,  "Silver II": 12,  "Silver I": 14,
@@ -30,28 +28,74 @@ const PROBLEM_TIER_REWARDS = {
     "Ruby V": 100,    "Ruby IV": 110,    "Ruby III": 120,   "Ruby II": 130,   "Ruby I": 140
 };
 
-// 🌟 정답 맞혔을 때 레이팅을 즉시 올리는 공유 헬퍼 함수
+// 🌟 [유저 상태 감시] judge.html 상단바 닉네임 연동 및 문제 리스트 성공 마커 실시간 반영
+onAuthStateChanged(auth, async (user) => {
+    const userInfo = document.getElementById('user-info');
+    if (user) {
+        // 1) 상단바 닉네임 노출 및 링크 연결
+        const displayName = user.displayName || "유저";
+        if (userInfo) {
+            userInfo.innerHTML = `<a href="profile.html" style="color: var(--blue); text-decoration: none; font-weight: bold; cursor: pointer;">${displayName}</a>`;
+            userInfo.style.display = 'inline-block';
+        }
+
+        // 2) 데이터베이스에서 풀었던 문제 목록 긁어와서 사이드바에 체크 표시(✔) 남기기
+        try {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) {
+                const solvedProblems = userDoc.data().solvedProblems || [];
+                solvedProblems.forEach(probId => {
+                    const marker = document.getElementById(`solved-marker-${probId}`);
+                    if (marker) marker.style.display = 'inline';
+                });
+            }
+        } catch (e) {
+            console.error("사용자 풀이 목록 로드 실패:", e);
+        }
+    } else {
+        if (userInfo) userInfo.style.display = 'none';
+    }
+});
+
+// 🌟 [레이팅 적립 및 중복 차단]
 async function awardRating(prob) {
     const user = auth.currentUser;
-    if (!user) return; // 로그인 안 된 상태면 차단
+    if (!user) return;
 
     if (!prob.tier || !prob.tier.name || !prob.tier.level) return;
     
-    // 구조 분석: tier.name("Bronze") + " " + tier.level("V") -> "Bronze V"
     const tierKey = prob.tier.name + " " + prob.tier.level;
     const pointsToAdd = PROBLEM_TIER_REWARDS[tierKey] || 0;
 
-    if (pointsToAdd > 0) {
-        try {
-            const userRef = doc(db, "users", user.uid);
-            // Firestore increment 함수로 원자적 증가 처리
-            await updateDoc(userRef, {
-                rating: increment(pointsToAdd)
-            });
-            alert(`정답입니다! 레이팅이 +${pointsToAdd} 증가했습니다. 🎉`);
-        } catch (e) {
-            console.error("레이팅 데이터베이스 동기화 실패:", e);
+    try {
+        const userRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+            const solvedProblems = userDoc.data().solvedProblems || [];
+            
+            // 🚨 이미 푼 적이 있는 문제라면 레이팅 적립 전면 차단
+            if (solvedProblems.includes(String(prob.id))) {
+                alert("이미 해결한 문제입니다. 레이팅은 중복 지급되지 않습니다. 🔄");
+                return;
+            }
         }
+
+        if (pointsToAdd > 0) {
+            // 새롭게 문제를 맞춘 경우에만 점수를 올리고 solvedProblems 배열에 문제 ID 추가
+            await updateDoc(userRef, {
+                rating: increment(pointsToAdd),
+                solvedProblems: arrayUnion(String(prob.id))
+            });
+            
+            // 실시간으로 사이드바에 초록색 체크 표시 등장시키기
+            const marker = document.getElementById(`solved-marker-${prob.id}`);
+            if (marker) marker.style.display = 'inline';
+
+            alert(`정답입니다! 레이팅이 +${pointsToAdd} 증가했습니다. 🎉`);
+        }
+    } catch (e) {
+        console.error("레이팅 동기화 처리 에러:", e);
     }
 }
 
@@ -478,7 +522,6 @@ _out
     resultBox.className      = "result-display res-success";
     resultBox.textContent    = "모든 테스트케이스 일치 ✅";
     
-    // 🌟 [파이썬 모드 성공] 레이팅 적립 실행
     await awardRating(prob);
 
     btn.disabled    = false;
@@ -487,7 +530,7 @@ _out
 }
 
 // ════════════════════════════════════════════════════════
-//  4. 채점 UI 및 메인 엔진
+//  4. 채점 UI
 // ════════════════════════════════════════════════════════
 var isJudging = false;
 
@@ -600,7 +643,6 @@ async function submitCode(probId) {
     resultBox.className     = "result-display res-success";
     resultBox.textContent   = "맞았습니다!! 🎉";
     
-    // 🌟 [그 뭐냐 언어 성공] 레이팅 적립 실행
     await awardRating(prob);
 
     btn.disabled    = false;
@@ -637,7 +679,6 @@ async function activatePythonMode(probId) {
 
     judgeArea.insertBefore(pySection, judgeArea.firstChild);
 
-    // 이벤트 리스너 바인딩
     document.getElementById('pySubmitBtn-' + probId).addEventListener('click', function() {
         submitCodePython(probId);
     });
@@ -687,21 +728,19 @@ function tierLabel(tier) {
     return tier.name + " " + tier.level;
 }
 
-// ════════════════════════════════════════════════════════
-//  8. 글로벌 윈도우 바인딩 (type="module" 환경 대응용)
-// ════════════════════════════════════════════════════════
 window.submitCode = submitCode;
 window.submitCodePython = submitCodePython;
 window.switchProblem = switchProblem;
 
 // ════════════════════════════════════════════════════════
-//  9. 자동 렌더링
+//  8. 자동 렌더링
 // ════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function () {
-
     var sidebarList = document.getElementById('sidebar-list');
     var mainContent = document.getElementById('main-content');
     var isFirst     = true;
+
+    if (!window.PROBLEMS) return;
 
     var sortedIds = Object.keys(window.PROBLEMS).sort(function(a, b) {
         return parseInt(a) - parseInt(b);
@@ -716,9 +755,11 @@ document.addEventListener('DOMContentLoaded', function () {
         tabEl.className = 'sidebar-item' + (isFirst ? ' active' : '');
         tabEl.id        = 'tab-' + probId;
         tabEl.setAttribute('onclick', "switchProblem('" + probId + "')");
+        // 🌟 성공 표시 마커 태그(id="solved-marker-ID")를 뼈대에 기본 주입 (평소엔 display:none)
         tabEl.innerHTML =
             '<span class="sidebar-num">'    + prob.id    + '</span>' +
             '<span class="sidebar-title">' + prob.title + '</span>' +
+            '<span class="solved-marker" id="solved-marker-' + probId + '" style="display:none; color:#3fb950; font-weight:bold; margin-right:6px;">✔</span>' +
             (tc ? '<span class="tier-badge ' + tc + '">' + tl + '</span>' : '');
         sidebarList.appendChild(tabEl);
 
@@ -799,14 +840,4 @@ function buildExamples(examples) {
             '</div>';
     });
     return html;
-}
-
-window.showAddProblemPopup = function() {
-    document.getElementById('addProblemOverlay').style.display = 'block';
-    document.getElementById('addProblemPopup').classList.add('active');
-}
-
-window.hideAddProblemPopup = function() {
-    document.getElementById('addProblemOverlay').style.display = 'none';
-    document.getElementById('addProblemPopup').classList.remove('active');
 }

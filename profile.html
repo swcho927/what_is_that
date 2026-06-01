@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>프로필 - 그 뭐냐 Judge</title>
+    <script src="problems.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         .profile-wrap {
@@ -69,21 +70,47 @@
             color: var(--text);
         }
         .progress-section {
-            margin-top: 24px;
+            margin-top: 32px;
         }
-        .progress-meta {
+        /* 🌟 요구사항 맞춤형 레이팅 메타 정보 구역 디자인 */
+        .progress-meta-ui {
             display: flex;
             justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 8px;
+            align-items: flex-end;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .progress-tier-side {
+            display: flex;
+            flex-direction: column;
             font-weight: bold;
         }
-        /* 🌟 [버그 수정 2] 게이지 바 컴포넌트 강제 노출을 위한 CSS 정밀 교정 */
+        .progress-tier-side .side-label {
+            font-size: 1rem;
+        }
+        .progress-tier-side .side-val {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .progress-my-center {
+            text-align: center;
+            font-weight: bold;
+        }
+        .progress-my-center .my-score {
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+        .progress-my-center .my-remain {
+            font-size: 0.8rem;
+            color: var(--blue);
+            margin-top: 2px;
+            font-weight: 800;
+        }
         .rating-bar-bg {
             width: 100%;
-            height: 14px;              /* 바 두께 확보 */
-            background: #21262d;       /* 확실하게 눈에 띄는 배경색 부여 */
+            height: 14px;              
+            background: #21262d;       
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid #30363d;
@@ -112,7 +139,7 @@
 
 <div class="profile-wrap">
     <div class="profile-card">
-        <div id="loading">유저 인증 세션 및 데이터 로드 중...</div>
+        <div id="loading">유저 인증 세션 및 실시간 데이터 연산 중...</div>
         
         <div id="profile-content" style="display: none;">
             <div class="profile-header-ui">
@@ -122,7 +149,7 @@
             
             <div class="stats-grid">
                 <div class="stat-box">
-                    <div class="stat-label">🔥 현재 레이팅</div>
+                    <div class="stat-label">🔥 현재 실시간 레이팅</div>
                     <div class="stat-value" id="stat-rating">0 점</div>
                 </div>
                 <div class="stat-box">
@@ -136,12 +163,27 @@
             </div>
 
             <div class="progress-section">
-                <div class="progress-meta">
-                    <span>랭킹 진행도</span>
-                    <span id="progress-percent">0%</span>
+                <div class="progress-meta-ui">
+                    <div class="progress-tier-side" style="text-align: left;">
+                        <span class="side-label" id="prog-curr-tier">-</span>
+                        <span class="side-val" id="prog-curr-min">0점</span>
+                    </div>
+                    
+                    <div class="progress-my-center">
+                        <div class="my-score"><span id="prog-my-rating">0</span>점</div>
+                        <div class="my-remain" id="prog-remain-text">-</div>
+                    </div>
+                    
+                    <div class="progress-tier-side" style="text-align: right;">
+                        <span class="side-label" id="prog-next-tier">-</span>
+                        <span class="side-val" id="prog-next-min">0점</span>
+                    </div>
                 </div>
                 <div class="rating-bar-bg">
                     <div class="rating-bar-fill" id="rating-bar"></div>
+                </div>
+                <div style="text-align: right; font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">
+                    구간 진행도: <span id="progress-percent">0%</span>
                 </div>
             </div>
         </div>
@@ -166,12 +208,22 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // 디렉터님의 신형 가입 점수 고유 수치 테이블 데이터셋 유지
+    const PROBLEM_TIER_REWARDS = {
+        "Bronze V": 1,   "Bronze IV": 2,   "Bronze III": 3,   "Bronze II": 4,   "Bronze I": 5,
+        "Silver V": 6,   "Silver IV": 8,   "Silver III": 10,  "Silver II": 12,  "Silver I": 14,
+        "Gold V": 15,    "Gold IV": 18,    "Gold III": 21,    "Gold II": 24,    "Gold I": 27,
+        "Platinum V": 32, "Platinum IV": 36, "Platinum III": 40, "Platinum II": 44, "Platinum I": 48,
+        "Diamond V": 60,  "Diamond IV": 65,  "Diamond III": 70,  "Diamond II": 75,  "Diamond I": 80,
+        "Ruby V": 100,    "Ruby IV": 110,    "Ruby III": 120,   "Ruby II": 130,   "Ruby I": 140
+    };
+
     const TIERS = [
         { name: "Bronze V",   min: 0,    color: "#ad5600" },
         { name: "Bronze IV",  min: 40,   color: "#ad5600" },
         { name: "Bronze III", min: 60,   color: "#ad5600" },
         { name: "Bronze II",  min: 80,   color: "#ad5600" },
-        { name: "Bronze I",   min: 100,   color: "#ad5600" },
+        { name: "Bronze I",   min: 100,  color: "#ad5600" },
         
         { name: "Silver V",   min: 120,  color: "#435f7a" },
         { name: "Silver IV",  min: 160,  color: "#435f7a" },
@@ -186,10 +238,10 @@
         { name: "Gold I",     min: 540,  color: "#ec9a00" },
         
         { name: "Platinum V", min: 640,  color: "#27e2a4" },
-        { name: "Platinum IV", min: 720, color: "#27e2a4" },
-        { name: "Platinum III", min: 800, color: "#27e2a4" },
-        { name: "Platinum II", min: 880, color: "#27e2a4" },
-        { name: "Platinum I",  min: 960, color: "#27e2a4" },
+        { name: "Platinum IV", min: 720,  color: "#27e2a4" },
+        { name: "Platinum III", min: 800,  color: "#27e2a4" },
+        { name: "Platinum II", min: 880,  color: "#27e2a4" },
+        { name: "Platinum I",  min: 960,  color: "#27e2a4" },
         
         { name: "Diamond V",  min: 1200, color: "#00b4fc" },
         { name: "Diamond IV", min: 1300, color: "#00b4fc" },
@@ -220,9 +272,21 @@
 
             if (userDoc.exists()) {
                 const data = userDoc.data();
-                rating = data.rating ?? 0;
                 nickname = data.nickname || nickname;
-                solvedCount = data.solvedProblems ? data.solvedProblems.length : 0;
+                
+                const solvedProblems = data.solvedProblems || [];
+                solvedCount = solvedProblems.length;
+
+                // 🌟 [1번 시스템] 유저가 푼 문제 목록 기반 동적 점수 합산 연산 실행
+                solvedProblems.forEach(probId => {
+                    if (window.PROBLEMS && window.PROBLEMS[probId]) {
+                        const prob = window.PROBLEMS[probId];
+                        if (prob.tier && prob.tier.name && prob.tier.level) {
+                            const tierKey = prob.tier.name + " " + prob.tier.level;
+                            rating += PROBLEM_TIER_REWARDS[tierKey] || 0;
+                        }
+                    }
+                });
                 
                 if (data.joinedAt) {
                     const dateObj = data.joinedAt.toDate ? data.joinedAt.toDate() : new Date(data.joinedAt);
@@ -230,14 +294,36 @@
                 }
             }
 
-            let currentTier = TIERS[0];
+            // 현재 속한 티어 탐색 및 인덱스 추출
+            let currentTierIdx = 0;
             for (let i = TIERS.length - 1; i >= 0; i--) {
                 if (rating >= TIERS[i].min) {
-                    currentTier = TIERS[i];
+                    currentTierIdx = i;
                     break;
                 }
             }
 
+            const currentTier = TIERS[currentTierIdx];
+            const nextTier = TIERS[currentTierIdx + 1] || null;
+
+            let progress = 0;
+            let remainText = "";
+
+            // 🌟 [티어 바 수술] 다음 티어까지의 전용 범위 백분율 연산
+            if (nextTier) {
+                const range = nextTier.min - currentTier.min;
+                const currentProgressScore = rating - currentTier.min;
+                progress = Math.min((currentProgressScore / range) * 100, 100).toFixed(1);
+                
+                const remainPoints = nextTier.min - rating;
+                remainText = `+${remainPoints}점 시 승급`;
+            } else {
+                // Ruby I 마스터 단계 예외 처리
+                progress = 100.0;
+                remainText = "최고 등급 달성 👑";
+            }
+
+            // 기본 스탯 주입
             document.getElementById('prof-nickname').textContent = nickname;
             document.getElementById('tier-name').textContent = currentTier.name;
             document.getElementById('tier-name').style.color = currentTier.color;
@@ -245,12 +331,30 @@
             document.getElementById('stat-solved').textContent = `${solvedCount} 개`;
             document.getElementById('stat-date').textContent = formattedDate;
             
-            const progress = Math.min((rating / 6100) * 100, 100).toFixed(1);
+            // 🌟 요구사항 기반 인터벌 프로그레스 데이터 동적 주입 및 컬러 연동
+            const currTierEl = document.getElementById('prog-curr-tier');
+            currTierEl.textContent = currentTier.name;
+            currTierEl.style.color = currentTier.color;
+            document.getElementById('prog-curr-min').textContent = `${currentTier.min}점`;
+
+            const nextTierEl = document.getElementById('prog-next-tier');
+            if (nextTier) {
+                nextTierEl.textContent = nextTier.name;
+                nextTierEl.style.color = nextTier.color;
+                document.getElementById('prog-next-min').textContent = `${nextTier.min}점`;
+            } else {
+                nextTierEl.textContent = "MAX";
+                nextTierEl.style.color = currentTier.color;
+                document.getElementById('prog-next-min').textContent = "";
+            }
+
+            document.getElementById('prog-my-rating').textContent = rating;
+            document.getElementById('prog-remain-text').textContent = remainText;
             document.getElementById('progress-percent').textContent = progress + '%';
             
+            // 게이지 바 애니메이션 작동
             const bar = document.getElementById('rating-bar');
             bar.style.backgroundColor = currentTier.color;
-            // 확실하게 width가 채워지도록 스타일 바인딩 강제 집행
             setTimeout(() => { bar.style.width = progress + '%'; }, 100);
 
             document.getElementById('loading').style.display = 'none';

@@ -122,11 +122,6 @@
             border-radius: 10px;
             transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #loading {
-            text-align: center;
-            color: var(--text-muted);
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
@@ -208,6 +203,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // 디렉터님의 순정 보상 테이블 개조 없이 복구
     const PROBLEM_TIER_REWARDS = {
         "Bronze V": 1,   "Bronze IV": 2,   "Bronze III": 3,   "Bronze II": 4,   "Bronze I": 5,
         "Silver V": 6,   "Silver IV": 8,   "Silver III": 10,  "Silver II": 12,  "Silver I": 14,
@@ -217,6 +213,7 @@
         "Ruby V": 100,    "Ruby IV": 110,    "Ruby III": 120,   "Ruby II": 130,   "Ruby I": 140
     };
 
+    // 디렉터님의 순정 승급 기획 기준 스케일
     const TIERS = [
         { name: "Bronze V",   min: 0,    color: "#ad5600" },
         { name: "Bronze IV",  min: 40,   color: "#ad5600" },
@@ -263,6 +260,8 @@
         }
 
         try {
+            console.log("=== 🔍 [그뭐냐 Judge 디버깅 오퍼레이션 시작] ===");
+            
             const userDoc = await getDoc(doc(db, "users", user.uid));
             let rating = 0;
             let nickname = user.displayName || "익명";
@@ -276,14 +275,26 @@
                 const solvedProblems = data.solvedProblems || [];
                 solvedCount = solvedProblems.length;
 
-                // 🌟 [순정 결합 완벽 구현] 복잡한 예외 처리 다 치우고 진짜 문제 객체의 name과 level을 정순 대조합니다.
+                console.log("1. 파이어베이스에서 로드한 푼 문제 리스트 (solvedProblems):", solvedProblems);
+                console.log("2. 현재 메모리에 탑재된 window.PROBLEMS 전체 구조:", window.PROBLEMS);
+
                 if (window.PROBLEMS) {
                     solvedProblems.forEach(probId => {
-                        const prob = window.PROBLEMS[probId];
+                        // 🌟 직통 데이터 연산 대조 (Key 룩업 및 내부 id 역추적 투트랙 백업)
+                        let prob = window.PROBLEMS[probId] || window.PROBLEMS[Number(probId)];
+                        if (!prob) {
+                            prob = Object.values(window.PROBLEMS).find(p => p && String(p.id) === String(probId));
+                        }
+
+                        console.log(` -> 📦 [문제 번호: ${probId}] 매칭 결과:`, prob);
+
                         if (prob && prob.tier && prob.tier.name && prob.tier.level) {
-                            const tierKey = prob.tier.name + " " + prob.tier.level; // "Gold II" 생성
-                            rating += PROBLEM_TIER_REWARDS[tierKey] || 0;
-                            console.log(rating);
+                            const tierKey = prob.tier.name + " " + prob.tier.level;
+                            const reward = PROBLEM_TIER_REWARDS[tierKey] || 0;
+                            rating += reward;
+                            console.log(`    [✅ 합산 성공] 티어 키: "${tierKey}" -> 보상 점수: +${reward}점 (현재 누적: ${rating}점)`);
+                        } else {
+                            console.log(`    [❌ 합산 실패] 문제를 찾지 못했거나 내부 데이터 포맷 규격이 깨져 있습니다.`);
                         }
                     });
                 }
@@ -293,6 +304,9 @@
                     formattedDate = dateObj.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
                 }
             }
+
+            console.log("3. 🏁 최종 연산 완료된 실시간 합산 레이팅 점수:", rating);
+            console.log("=================================================");
 
             let currentTierIdx = 0;
             for (let i = TIERS.length - 1; i >= 0; i--) {
@@ -320,6 +334,7 @@
                 remainText = "최고 등급 달성 👑";
             }
 
+            // UI 렌더링 주입
             document.getElementById('prof-nickname').textContent = nickname;
             document.getElementById('tier-name').textContent = currentTier.name;
             document.getElementById('tier-name').style.color = currentTier.color;
@@ -357,8 +372,8 @@
             document.getElementById('profile-content').style.display = 'block';
 
         } catch (e) {
-            console.error(e);
-            alert("프로필 대시보드 로드 중 치명적인 오류가 발생했습니다.");
+            console.error("Critical Profile Error:", e);
+            alert("프로필 대시보드 로드 중 오류가 발생했습니다. 개발자 도구 콘솔을 확인해 주세요.");
         }
     });
 </script>

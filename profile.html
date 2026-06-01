@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>프로필 - 그 뭐냐 Judge</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .profile-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 52px);
+            margin-top: 52px;
+        }
+        .profile-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .profile-nickname {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+        .rating-section {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        /* 레이팅 바 스타일 */
+        .rating-bar-bg {
+            width: 100%;
+            height: 12px;
+            background: var(--bg-main);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .rating-bar-fill {
+            height: 100%;
+            width: 0%; /* JS에서 조절 */
+            transition: width 1s ease-in-out;
+        }
+        .tier-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .rating-score {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
+    <div class="topbar-divider"></div>
+    <span class="topbar-sub">유저 프로필</span>
+</div>
+
+<div class="profile-wrap">
+    <div class="profile-card">
+        <div id="loading">불러오는 중...</div>
+        <div id="profile-content" style="display: none;">
+            <div class="profile-nickname" id="prof-nickname">닉네임</div>
+            
+            <div class="rating-section">
+                <div class="tier-text" id="tier-name">Bronze V</div>
+                <div class="rating-bar-bg">
+                    <div class="rating-bar-fill" id="rating-bar"></div>
+                </div>
+                <div class="rating-score" id="rating-val">Rating: 0</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
+        authDomain:        "what-is-that-3cc48.firebaseapp.com",
+        projectId:         "what-is-that-3cc48",
+        storageBucket:     "what-is-that-3cc48.firebasestorage.app",
+        messagingSenderId: "745704527046",
+        appId:             "1:745704527046:web:1ef97739fdc1348c96b3c7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 티어 정보 설정 (백준 컬러 시스템)
+    const TIERS = [
+        { name: "Bronze V",   min: 0,    color: "#ad5600" },
+        { name: "Bronze IV",  min: 30,   color: "#ad5600" },
+        { name: "Bronze III", min: 60,   color: "#ad5600" },
+        { name: "Bronze II",  min: 90,   color: "#ad5600" },
+        { name: "Bronze I",   min: 120,  color: "#ad5600" },
+        { name: "Silver V",   min: 150,  color: "#435f7a" },
+        { name: "Gold V",     min: 500,  color: "#ec9a00" },
+        { name: "Platinum V", min: 1000, color: "#27e2a4" }
+    ];
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            location.href = 'login.html';
+            return;
+        }
+
+        try {
+            // Firestore에서 유저 데이터(레이팅) 가져오기
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            let rating = 0;
+            let nickname = user.displayName;
+
+            if (userDoc.exists()) {
+                rating = userDoc.data().rating || 0;
+                nickname = userDoc.data().nickname || nickname;
+            }
+
+            // 레이팅에 따른 티어 계산
+            let currentTier = TIERS[0];
+            for (let i = TIERS.length - 1; i >= 0; i--) {
+                if (rating >= TIERS[i].min) {
+                    currentTier = TIERS[i];
+                    break;
+                }
+            }
+
+            // UI 반영
+            document.getElementById('prof-nickname').textContent = nickname;
+            document.getElementById('tier-name').textContent = currentTier.name;
+            document.getElementById('tier-name').style.color = currentTier.color;
+            document.getElementById('rating-val').textContent = `Rating: ${rating}`;
+            
+            // 바 컬러 및 애니메이션
+            const bar = document.getElementById('rating-bar');
+            bar.style.backgroundColor = currentTier.color;
+            // 게이지 계산 (예: 다음 티어까지의 진행도, 여기선 단순 시각화 위해 1500 만점 기준)
+            const progress = Math.min((rating / 1500) * 100, 100);
+            setTimeout(() => { bar.style.width = progress + '%'; }, 100);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('profile-content').style.display = 'block';
+
+        } catch (e) {
+            console.error(e);
+            alert("데이터를 불러오는데 실패했습니다.");
+        }
+    });
+</script>
+
+</body>
+</html>

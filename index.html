@@ -23,21 +23,34 @@
         const auth = getAuth(app);
 
         onAuthStateChanged(auth, (user) => {
-            const btnLogin  = document.getElementById('btn-login');
-            const btnSignup = document.getElementById('btn-signup');
-            const btnLogout = document.getElementById('btn-logout');
-            const userInfo  = document.getElementById('user-info');
+            const userInfo  = document.getElementById('user-info');      // 닉네임이 들어갈 자리
+            const btnLogin  = document.getElementById('btn-login');      // [로그인] 버튼
+            const btnSignup = document.getElementById('btn-signup');     // [회원가입] 버튼
+            const btnLogout = document.getElementById('btn-logout');     // [로그아웃] 버튼
 
             if (user) {
-                if (btnLogin)  btnLogin.style.display  = 'none';
+                // 1. 구글 인증 프로필에서 가입 시 설정한 닉네임(displayName)을 꺼냅니다.
+                // 만약 닉네임이 아직 반영 안 된 상태라면 백업으로 이메일을 보여줍니다.
+                const displayName = user.displayName || user.email || "유저";
+                
+                // 2. 이쁜 파란색 닉네임 링크로 교체하고 클릭 시 profile.html로 가도록 주입
+                userInfo.innerHTML = `<a href="profile.html" style="color: var(--blue); text-decoration: none; font-weight: bold; cursor: pointer;">${displayName}</a>`;
+                userInfo.style.display = 'inline-block';
+                
+                // 3. 상단바 버튼 제어 (로그인/회원가입은 숨기고, 로그아웃은 보여줌)
+                if (btnLogin)  btnLogin.style.display = 'none';
                 if (btnSignup) btnSignup.style.display = 'none';
                 if (btnLogout) btnLogout.style.display = 'inline-block';
-                if (userInfo)  { userInfo.textContent = user.email; userInfo.style.display = 'inline-block'; }
+
             } else {
-                if (btnLogin)  btnLogin.style.display  = 'inline-block';
+                // 로그아웃 상태이거나 세션이 없을 때
+                userInfo.style.display = 'none';
+                userInfo.innerHTML = '';
+                
+                // 버튼 반대로 제어
+                if (btnLogin)  btnLogin.style.display = 'inline-block';
                 if (btnSignup) btnSignup.style.display = 'inline-block';
                 if (btnLogout) btnLogout.style.display = 'none';
-                if (userInfo)  userInfo.style.display  = 'none';
             }
         });
 

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>로그인 - 그 뭐냐 Judge</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 52px);
+            margin-top: 52px;
+        }
+        .auth-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 36px 40px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .auth-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .auth-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: -8px;
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 11px;
+            border-radius: 7px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s;
+        }
+        .auth-btn-google {
+            background: var(--bg-main);
+            color: var(--text);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .auth-btn-google:hover {
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+        .auth-error {
+            color: var(--red);
+            font-size: 0.82rem;
+            display: none;
+        }
+        .auth-link {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .auth-link a {
+            color: var(--blue);
+            text-decoration: none;
+        }
+        .auth-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
+    <div class="topbar-divider"></div>
+    <span class="topbar-sub">그 뭐냐 언어 온라인 채점 사이트</span>
+</div>
+
+<div class="auth-wrap">
+    <div class="auth-box">
+        <div>
+            <div class="auth-title">로그인</div>
+            <div class="auth-subtitle">구글 계정으로 로그인하세요</div>
+        </div>
+
+        <div id="error-msg" class="auth-error"></div>
+
+        <button class="auth-btn auth-btn-google" onclick="loginGoogle()">
+            <svg width="18" height="18" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            구글로 로그인
+        </button>
+
+        <div class="auth-link">계정이 없으신가요? <a href="signup.html">회원가입</a></div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getAuth, signInWithPopup,
+             GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
+        authDomain:        "what-is-that-3cc48.firebaseapp.com",
+        projectId:         "what-is-that-3cc48",
+        storageBucket:     "what-is-that-3cc48.firebasestorage.app",
+        messagingSenderId: "745704527046",
+        appId:             "1:745704527046:web:1ef97739fdc1348c96b3c7",
+        measurementId:     "G-YKN1NFTZRM"
+    };
+
+    const app      = initializeApp(firebaseConfig);
+    const auth     = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) location.href = 'index.html';
+    });
+
+    function showError(msg) {
+        var el = document.getElementById('error-msg');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    window.loginGoogle = async function() {
+        try {
+            await signInWithPopup(auth, provider);
+            location.href = 'index.html';
+        } catch(e) {
+            showError('구글 로그인 실패: ' + e.message);
+        }
+    };
+</script>
+
+</body>
+</html>

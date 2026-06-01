@@ -164,6 +164,8 @@
     import { initializeApp }                                      from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, 
              signOut, updateProfile, getAdditionalUserInfo }     from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    // 🌟 1. 파이어베이스 데이터베이스(Firestore) 모듈 추가 수입
+    import { getFirestore, doc, setDoc }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
@@ -177,6 +179,8 @@
 
     const app      = initializeApp(firebaseConfig);
     const auth     = getAuth(app);
+    // 🌟 2. 데이터베이스 객체 초기화
+    const db       = getFirestore(app);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -186,22 +190,18 @@
         el.style.display = 'block';
     }
 
-    // 1단계: 구글 로그인 연동 버튼 클릭 시
     window.signUpGoogle = async function() {
         try {
             document.getElementById('error-msg').style.display = 'none';
             const result = await signInWithPopup(auth, provider);
             const additionalInfo = getAdditionalUserInfo(result);
 
-            // 🚨 [조건 1] 이미 가입된 계정인 경우 (isNewUser가 false일 때)
             if (additionalInfo && !additionalInfo.isNewUser) {
-                // 입력창을 열지 않고, 빨간색 에러 메시지 박스에 경고문을 고정합니다.
                 showError("이미 가입된 계정입니다. 로그인 페이지를 이용해 주세요.");
-                await signOut(auth); // 로그인 세션 해제
+                await signOut(auth);
                 return;
             }
 
-            // ✅ [조건 2] 처음 가입하는 신규 회원일 때만 입력 폼 노출
             document.getElementById('auth-sub-text').textContent = "그 뭐냐 Judge에 오신 것을 환영합니다! 상세 정보를 입력해 주세요.";
             document.getElementById('step-auth').style.display = 'none';
             document.getElementById('step-info').style.display = 'flex';
@@ -211,7 +211,6 @@
         }
     };
 
-    // 2단계: 정보 기입 후 가입 완료 버튼 클릭 시
     window.completeSignUp = async function() {
         const name     = document.getElementById('reg-name').value.trim();
         const nickname = document.getElementById('reg-nickname').value.trim();
@@ -223,9 +222,21 @@
         }
 
         try {
-            // 파이어베이스 프로필에 닉네임 등록
-            await updateProfile(auth.currentUser, {
+            const user = auth.currentUser;
+
+            // 1) 인증 프로필에 닉네임 설정 (기본 세션용)
+            await updateProfile(user, {
                 displayName: nickname
+            });
+
+            // 🌟 3) [핵심] Firestore 데이터베이스의 'users' 방에 유저 고유 UID 이름으로 데이터 통째로 저장!
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                email: user.email,
+                name: name,
+                nickname: nickname,
+                birth: birth,
+                joinedAt: new Date() // 가입일시 자동 저장
             });
 
             alert(`${nickname}님, 가입을 환영합니다! 🎉`);

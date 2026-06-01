@@ -56,13 +56,13 @@
 
     // ── 경계값: N=1 ──
     testCases.push(makeCase([1]));
-    testCases.push(makeCase([1000000]));
+    testCases.push(makeCase([100000]));
 
     // ── 경계값: N=2 ──
     testCases.push(makeCase([1, 1]));
     testCases.push(makeCase([1, 2]));
     testCases.push(makeCase([1, 3]));
-    testCases.push(makeCase([1000000, 999999]));
+    testCases.push(makeCase([100000, 999999]));
 
     // ── 경계값: N=3 ──
     testCases.push(makeCase([1, 3, 2]));
@@ -78,7 +78,7 @@
     testCases.push(makeCase([3, 3, 4, 4, 3, 2, 2, 3]));
     testCases.push(makeCase([100, 1, 2, 3, 4, 5]));
     testCases.push(makeCase([1, 2, 3, 4, 5, 100]));
-    testCases.push(makeCase([1, 2, 3, 1000000, 4, 5, 6]));
+    testCases.push(makeCase([1, 2, 3, 100000, 4, 5, 6]));
     testCases.push(makeCase([1, 10, 1, 10, 1, 10]));
     testCases.push(makeCase([1, 100, 200, 300, 400]));
 
@@ -96,31 +96,31 @@
         var rng = makeRng(seed);
         var n = randRange(rng, 100, 1000);
         var arr = [];
-        for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 1000000));
+        for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 100000));
         testCases.push(makeCase(arr));
     }
 
-    // ── large 랜덤 (N=5000~10000) ──
+    // ── large 랜덤 (N=5000~20000) ──
     for (var seed = 200; seed <= 219; seed++) {
         var rng = makeRng(seed);
-        var n = randRange(rng, 5000, 10000);
+        var n = randRange(rng, 5000, 20000);
         var arr = [];
-        for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 1000000));
+        for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 100000));
         testCases.push(makeCase(arr));
     }
 
-    // ── N=10000 극단값 ──
-    testCases.push(makeCase(new Array(10000).fill(1)));
-    testCases.push(makeCase(Array.from({length: 10000}, (_, i) => i + 1)));
-    testCases.push(makeCase(Array.from({length: 10000}, (_, i) => 10000 - i)));
-    testCases.push(makeCase(Array.from({length: 10000}, (_, i) => i % 2 === 0 ? 1 : 2)));
-    testCases.push(makeCase(Array.from({length: 10000}, (_, i) => i % 2 === 0 ? 1000000 : 1)));
+    // ── N=20000 극단값 ──
+    testCases.push(makeCase(new Array(20000).fill(1)));
+    testCases.push(makeCase(Array.from({length: 20000}, (_, i) => i + 1)));
+    testCases.push(makeCase(Array.from({length: 20000}, (_, i) => 20000 - i)));
+    testCases.push(makeCase(Array.from({length: 20000}, (_, i) => i % 2 === 0 ? 1 : 2)));
+    testCases.push(makeCase(Array.from({length: 20000}, (_, i) => i % 2 === 0 ? 100000 : 1)));
     // 앞부분 긴 만가 + 끊김 + 뒷부분 긴 만가, 가운데 하나 제거로 연결
     (function() {
         var arr = [];
-        for (var i = 0; i < 4999; i++) arr.push(i % 2 === 0 ? 1 : 2);
+        for (var i = 0; i < 9999; i++) arr.push(i % 2 === 0 ? 1 : 2);
         arr.push(100); // 끊기는 원소
-        for (var i = 0; i < 5000; i++) arr.push(i % 2 === 0 ? 1 : 2);
+        for (var i = 0; i < 10000; i++) arr.push(i % 2 === 0 ? 1 : 2);
         testCases.push(makeCase(arr));
     })();
 
@@ -138,7 +138,7 @@
         timeLimit:   1,
         memoryLimit: 256,
 
-        tier: { name: "Gold", level: "IV" },
+        tier: { name: "Gold", level: "III" },
 
         description: `폭풍우가 지나간 대호수에는 오래된 노래가 남는다.<br>
 항해자들은 이를 "파도의 만가"라고 부른다.<br>
@@ -158,7 +158,7 @@
 - 또는 아무 작업도 하지 않는다.<br><br>
 원소를 제거하지 않거나 하나 제거한 뒤, 남은 수열에서 만들 수 있는 가장 긴 만가 구간의 길이를 구하여라.`,
 
-        inputDesc:  `첫째 줄에 정수 N이 주어진다. (1 ≤ N ≤ 10,000)<br>둘째 줄에 수열 A₁, A₂, ..., Aₙ이 주어진다.`,
+        inputDesc:  `첫째 줄에 정수 N이 주어진다. (1 ≤ N ≤ 20,000)<br>둘째 줄에 수열 A₁, A₂, ..., Aₙ이 주어진다. (1 ≤ Aᵢ ≤ 100,000)`,
 
         outputDesc: `조건을 만족하는 가장 긴 만가 구간의 길이를 출력한다.`,
 

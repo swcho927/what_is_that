@@ -2,62 +2,18 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>그 뭐냐 Judge</title>
+    <title>채점 - 그 뭐냐 Judge</title>
     <link rel="stylesheet" href="style.css">
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
-            authDomain:        "what-is-that-3cc48.firebaseapp.com",
-            projectId:         "what-is-that-3cc48",
-            storageBucket:     "what-is-that-3cc48.firebasestorage.app",
-            messagingSenderId: "745704527046",
-            appId:             "1:745704527046:web:1ef97739fdc1348c96b3c7",
-            measurementId:     "G-YKN1NFTZRM"
-        };
-
-        const app  = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db   = getFirestore(app);
-
-        window.firebaseAuth = auth;
-        window.firebaseDB   = db;
-        window.firebaseFunctions = { signOut };
-
-        onAuthStateChanged(auth, (user) => {
-            const btnLogin  = document.getElementById('btn-login');
-            const btnSignup = document.getElementById('btn-signup');
-            const btnLogout = document.getElementById('btn-logout');
-            const userInfo  = document.getElementById('user-info');
-
-            if (user) {
-                window.currentUser = user;
-                if (btnLogin)  btnLogin.style.display  = 'none';
-                if (btnSignup) btnSignup.style.display = 'none';
-                if (btnLogout) btnLogout.style.display = 'inline-block';
-                if (userInfo)  { userInfo.textContent = user.email; userInfo.style.display = 'inline-block'; }
-            } else {
-                window.currentUser = null;
-                if (btnLogin)  btnLogin.style.display  = 'inline-block';
-                if (btnSignup) btnSignup.style.display = 'inline-block';
-                if (btnLogout) btnLogout.style.display = 'none';
-                if (userInfo)  userInfo.style.display  = 'none';
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('btn-logout').addEventListener('click', () => {
-                signOut(auth).then(() => location.href = 'index.html');
-            });
-        });
-    </script>
-
     <script>
         window.PROBLEMS = {};
+        function showAddProblemPopup() {
+            document.getElementById('addProblemOverlay').style.display = 'block';
+            document.getElementById('addProblemPopup').style.display = 'block';
+        }
+        function hideAddProblemPopup() {
+            document.getElementById('addProblemOverlay').style.display = 'none';
+            document.getElementById('addProblemPopup').style.display = 'none';
+        }
     </script>
 </head>
 <body>
@@ -67,6 +23,7 @@
     <div class="topbar-divider"></div>
     <span class="topbar-sub">그 뭐냐 언어 온라인 채점 사이트</span>
     <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+        <button class="topbar-btn" onclick="location.href='ranking.html'">랭킹</button>
         <span id="user-info" style="display:none; font-size:0.82rem; color:var(--text-muted);"></span>
         <button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>
         <button id="btn-signup" class="topbar-btn topbar-btn-primary" onclick="location.href='signup.html'">회원가입</button>
@@ -94,37 +51,19 @@
 <script src="problems/2000.js"></script>
 <script src="problems/3000.js"></script>
 <script src="problems/9001.js"></script>
+
 <script type="module" src="judge.js"></script>
 
-<div class="popup-overlay" id="addProblemOverlay" onclick="hideAddProblemPopup()"></div>
-<div class="popup" id="addProblemPopup">
+<div class="popup-overlay" id="addProblemOverlay" onclick="hideAddProblemPopup()" style="display:none;"></div>
+<div class="popup" id="addProblemPopup" style="display:none;">
     <h2 class="popup-title">문제 추가</h2>
-    <p class="popup-body">
+    <div class="popup-body" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem; line-height: 1.6;">
         그 뭐냐 Judge는 현재 서버 없이 운영되고 있어 Gmail을 통해 문제 추가를 요청할 수 있습니다.
-        주어진 양식에 맞춰 <a href="https://mail.google.com/mail/?view=cm&fs=1&to=swcho927@gmail.com" target="_blank">swcho927@gmail.com</a>으로 메일을 보내주시면 문제 검토 후 추가하도록 하겠습니다.
-        추가된 문제는 9000번부터 차례대로 추가되며, 추후에 문제 번호가 바뀔 수 있습니다.<br><br>
-        <u>양식</u><br>
-        문제 제목<br>
-        시간 제한, 메모리 제한<br>
-        난이도<br>
-        문제 내용<br>
-        입력: 수의 범위와 입력 형식을 정확하게 적어주세요.<br>
-        출력: 출력 형식을 정확하게 적어주세요.<br>
-        예제: 간단한 예제를 적어주세요.<br><br>
-        <u>예시</u><br>
-        문제 제목: A+B<br>
-        시간 제한: 1초, 메모리 제한: 256MB<br>
-        난이도: Bronze V<br>
-        문제 내용: 두 정수를 입력 받아 두 수의 합을 출력하시오.<br>
-        입력: 첫째 줄에 정수 A, B가 공백으로 구분하여 주어진다. (1 ≤ A, B ≤ 10,000)<br>
-        출력: 첫째 줄에 A+B를 출력한다.<br>
-        예제:<br>
-        입력 1<br>
-        1 2<br>
-        출력 1<br>
-        3
-    </p>
-    <button class="popup-confirm-btn" onclick="hideAddProblemPopup()">확인</button>
+        주어진 양식에 맞춰 <a href="https://mail.google.com/mail/?view=cm&fs=1&to=swcho927@gmail.com" target="_blank">swcho927@gmail.com</a>으로 메일을 보내주시면 문제 검토 후 추가하도록 하겠습니다.<br><br>
+        <strong>[양식]</strong><br>문제 제목 / 시간·메모리 제한 / 난이도 / 문제 내용 / 입력 형식 / 출력 형식 / 예제<br><br>
+        <strong>[예시]</strong><br>두 정수를 입력 받아 합을 구하는 브론즈 V 난이도의 A+B 문제 등
+    </div>
+    <button class="popup-confirm-btn" onclick="hideAddProblemPopup()" style="margin-top:15px;">확인</button>
 </div>
 
 </body>

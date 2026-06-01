@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>프로필 - 그 뭐냐 Judge</title>
+    <script>window.PROBLEMS = window.PROBLEMS || {};</script>
     <script src="problems.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -120,6 +121,11 @@
             width: 0%; 
             border-radius: 10px;
             transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #loading {
+            text-align: center;
+            color: var(--text-muted);
+            font-weight: bold;
         }
     </style>
 </head>
@@ -270,13 +276,12 @@
                 const solvedProblems = data.solvedProblems || [];
                 solvedCount = solvedProblems.length;
 
-                // 🌟 [핵심 보완] window.PROBLEMS 구조(배열이든 오브젝트든)에 무관하게 p.id 매칭 연산 동적 수행
+                // 🌟 [순정 결합 완벽 구현] 복잡한 예외 처리 다 치우고 진짜 문제 객체의 name과 level을 정순 대조합니다.
                 if (window.PROBLEMS) {
-                    const problemsList = Object.values(window.PROBLEMS);
                     solvedProblems.forEach(probId => {
-                        const prob = problemsList.find(p => p && String(p.id) === String(probId));
+                        const prob = window.PROBLEMS[probId];
                         if (prob && prob.tier && prob.tier.name && prob.tier.level) {
-                            const tierKey = prob.tier.name + " " + prob.tier.level;
+                            const tierKey = prob.tier.name + " " + prob.tier.level; // "Gold II" 생성
                             rating += PROBLEM_TIER_REWARDS[tierKey] || 0;
                         }
                     });

@@ -1,17 +1,63 @@
 // ════════════════════════════════════════════════════════
-//  judge.js  ─  그뭐냐 채점 엔진
+//  judge.js  ─  그뭐냐 채점 엔진 (파이어베이스 레이팅 연동)
 // ════════════════════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import { getFirestore, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
+// 디렉터님의 파이어베이스 프로젝트 키 정보 연동
+const firebaseConfig = {
+    apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
+    authDomain:        "what-is-that-3cc48.firebaseapp.com",
+    projectId:         "what-is-that-3cc48",
+    storageBucket:     "what-is-that-3cc48.firebasestorage.app",
+    messagingSenderId: "745704527046",
+    appId:             "1:745704527046:web:1ef97739fdc1348c96b3c7",
+    measurementId:     "G-YKN1NFTZRM"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// 🌟 디렉터님이 하달하신 문제 티어별 레이팅 증가량 매핑 테이블
+const PROBLEM_TIER_REWARDS = {
+    "Bronze V": 1,   "Bronze IV": 2,   "Bronze III": 3,   "Bronze II": 4,   "Bronze I": 5,
+    "Silver V": 6,   "Silver IV": 8,   "Silver III": 10,  "Silver II": 12,  "Silver I": 14,
+    "Gold V": 15,    "Gold IV": 18,    "Gold III": 21,    "Gold II": 24,    "Gold I": 27,
+    "Platinum V": 32, "Platinum IV": 36, "Platinum III": 40, "Platinum II": 44, "Platinum I": 48,
+    "Diamond V": 60,  "Diamond IV": 65,  "Diamond III": 70,  "Diamond II": 75,  "Diamond I": 80,
+    "Ruby V": 100,    "Ruby IV": 110,    "Ruby III": 120,   "Ruby II": 130,   "Ruby I": 140
+};
+
+// 🌟 정답 맞혔을 때 레이팅을 즉시 올리는 공유 헬퍼 함수
+async function awardRating(prob) {
+    const user = auth.currentUser;
+    if (!user) return; // 로그인 안 된 상태면 차단
+
+    if (!prob.tier || !prob.tier.name || !prob.tier.level) return;
+    
+    // 구조 분석: tier.name("Bronze") + " " + tier.level("V") -> "Bronze V"
+    const tierKey = prob.tier.name + " " + prob.tier.level;
+    const pointsToAdd = PROBLEM_TIER_REWARDS[tierKey] || 0;
+
+    if (pointsToAdd > 0) {
+        try {
+            const userRef = doc(db, "users", user.uid);
+            // Firestore increment 함수로 원자적 증가 처리
+            await updateDoc(userRef, {
+                rating: increment(pointsToAdd)
+            });
+            alert(`정답입니다! 레이팅이 +${pointsToAdd} 증가했습니다. 🎉`);
+        } catch (e) {
+            console.error("레이팅 데이터베이스 동기화 실패:", e);
+        }
+    }
+}
 
 // ════════════════════════════════════════════════════════
 //  1. 그뭐냐 인터프리터
-//
-//  최적화:
-//  1) 사전 컴파일: 실행 전 전체 코드를 한 번만 파싱
-//  2) Map 사용: 메모리를 JS 객체 대신 Map으로 (더 빠름)
-//  3) MLE 체크: Object.keys() 대신 Map.size 사용
 // ════════════════════════════════════════════════════════
-
 var memory = new Map();
 var pc = 0;
 
@@ -107,21 +153,17 @@ function getValFromTokens(toks) {
     return parseExpr();
 }
 
-// ── 사전 컴파일 ──────────────────────────────────────────
-// 코드를 실행 전에 한 번만 파싱해서 배열로 저장
-// { toks, cmdVal, leftToks, rightToks } 형태
-// 실행 시에는 저장된 결과를 바로 사용 (반복 파싱 없음)
 function precompile(code) {
     return code.split("\n").map(function(line) {
         var fullLine = line.split('#')[0].trim();
-        if (!fullLine) return null; // 빈 줄/주석만 있는 줄
+        if (!fullLine) return null;
 
         var allToks = tokenizeLine(fullLine).filter(function(t) {
             return t.type !== 'text' && t.type !== 'comment';
         });
         var cmdIdx = allToks.findIndex(function(t) { return t.type === 'cmd'; });
 
-        if (cmdIdx === -1) return null; // 명령어 없는 줄
+        if (cmdIdx === -1) return null;
 
         return {
             cmdVal:    allToks[cmdIdx].val,
@@ -132,7 +174,7 @@ function precompile(code) {
 }
 
 function runCode(code, input, timeLimitMs, memLimitMB) {
-    memory = new Map(); // Map으로 초기화
+    memory = new Map();
     pc = 0;
     let outputBuffer = "";
     let inputTokens  = input.trim().split(/[\n\s]+/).filter(s => s.length > 0);
@@ -140,7 +182,6 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
     const memLimitBytes = memLimitMB * 1024 * 1024;
     const startTime     = Date.now();
 
-    // ★ 사전 컴파일: 실행 전 한 번만 파싱
     const compiled = precompile(code);
     const len      = compiled.length;
 
@@ -197,11 +238,9 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
     }
 }
 
-
 // ════════════════════════════════════════════════════════
 //  2. CodeMirror (Python 에디터 전용)
 // ════════════════════════════════════════════════════════
-
 var cmPyEditors = {};
 var cmLoaded = false;
 var cmLoadPromise = null;
@@ -267,11 +306,9 @@ function getPyEditorValue(probId) {
     return el ? el.value : "";
 }
 
-
 // ════════════════════════════════════════════════════════
 //  3. 파이썬 모드
 // ════════════════════════════════════════════════════════
-
 var ADMIN_HASH = "905e8270550625954fab4e3515024b924ca20c3c0da3989252e0e42f8447a582";
 var pyodideInstance = null;
 var pyodideLoading  = false;
@@ -328,7 +365,7 @@ async function submitCodePython(probId) {
     });
 
     var total        = tcs.length;
-    var btn          = document.getElementById("sBtn-"         + probId);
+    var btn          = document.getElementById("sBtn-"          + probId);
     var progressWrap = document.getElementById("progressWrap-" + probId);
     var progressFill = document.getElementById("progressFill-" + probId);
     var progressNum  = document.getElementById("progressNum-"  + probId);
@@ -439,17 +476,18 @@ _out
     progressFill.style.background = "var(--green)";
     resultBox.style.display  = "block";
     resultBox.className      = "result-display res-success";
-    resultBox.style.fontSize = "";
-    resultBox.style.color    = "";
     resultBox.textContent    = "모든 테스트케이스 일치 ✅";
+    
+    // 🌟 [파이썬 모드 성공] 레이팅 적립 실행
+    await awardRating(prob);
+
     btn.disabled    = false;
     btn.textContent = "다시 제출";
     isJudging       = false;
 }
 
-
 // ════════════════════════════════════════════════════════
-//  4. 채점 UI
+//  4. 채점 UI 및 메인 엔진
 // ════════════════════════════════════════════════════════
 var isJudging = false;
 
@@ -483,7 +521,7 @@ async function submitCode(probId) {
     var timeLimitMs = (prob.timeLimit || 2) * 1000;
     var memLimitMB  = prob.memoryLimit || 256;
 
-    var btn          = document.getElementById("sBtn-"         + probId);
+    var btn          = document.getElementById("sBtn-"          + probId);
     var progressWrap = document.getElementById("progressWrap-" + probId);
     var progressFill = document.getElementById("progressFill-" + probId);
     var progressNum  = document.getElementById("progressNum-"  + probId);
@@ -561,11 +599,14 @@ async function submitCode(probId) {
     resultBox.style.display = "block";
     resultBox.className     = "result-display res-success";
     resultBox.textContent   = "맞았습니다!! 🎉";
+    
+    // 🌟 [그 뭐냐 언어 성공] 레이팅 적립 실행
+    await awardRating(prob);
+
     btn.disabled    = false;
     btn.textContent = "다시 제출";
     isJudging       = false;
 }
-
 
 // ════════════════════════════════════════════════════════
 //  5. 파이썬 모드 활성화
@@ -589,12 +630,17 @@ async function activatePythonMode(probId) {
                     'style="height:180px;"></textarea>' +
             '</div>' +
             '<button class="btn-submit" style="margin-top:8px; background:linear-gradient(135deg,#2d6a2d,#3fb950);" ' +
-                'onclick="submitCodePython(\'' + probId + '\')">' +
+                'id="pySubmitBtn-' + probId + '">' +
                 '파이썬으로 검증' +
             '</button>' +
         '</div>';
 
     judgeArea.insertBefore(pySection, judgeArea.firstChild);
+
+    // 이벤트 리스너 바인딩
+    document.getElementById('pySubmitBtn-' + probId).addEventListener('click', function() {
+        submitCodePython(probId);
+    });
 
     await loadCodeMirror();
     var textarea = document.getElementById("pyEditor-" + probId);
@@ -616,7 +662,6 @@ async function activatePythonMode(probId) {
     }
 }
 
-
 // ════════════════════════════════════════════════════════
 //  6. 탭 전환
 // ════════════════════════════════════════════════════════
@@ -628,7 +673,6 @@ function switchProblem(probId) {
     if (page) page.classList.add('active');
     if (tab)  tab.classList.add('active');
 }
-
 
 // ════════════════════════════════════════════════════════
 //  7. 티어 배지 헬퍼
@@ -643,9 +687,15 @@ function tierLabel(tier) {
     return tier.name + " " + tier.level;
 }
 
+// ════════════════════════════════════════════════════════
+//  8. 글로벌 윈도우 바인딩 (type="module" 환경 대응용)
+// ════════════════════════════════════════════════════════
+window.submitCode = submitCode;
+window.submitCodePython = submitCodePython;
+window.switchProblem = switchProblem;
 
 // ════════════════════════════════════════════════════════
-//  8. 자동 렌더링
+//  9. 자동 렌더링
 // ════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -667,7 +717,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tabEl.id        = 'tab-' + probId;
         tabEl.setAttribute('onclick', "switchProblem('" + probId + "')");
         tabEl.innerHTML =
-            '<span class="sidebar-num">'   + prob.id    + '</span>' +
+            '<span class="sidebar-num">'    + prob.id    + '</span>' +
             '<span class="sidebar-title">' + prob.title + '</span>' +
             (tc ? '<span class="tier-badge ' + tc + '">' + tl + '</span>' : '');
         sidebarList.appendChild(tabEl);
@@ -751,12 +801,12 @@ function buildExamples(examples) {
     return html;
 }
 
-function showAddProblemPopup() {
+window.showAddProblemPopup = function() {
     document.getElementById('addProblemOverlay').style.display = 'block';
     document.getElementById('addProblemPopup').classList.add('active');
 }
 
-function hideAddProblemPopup() {
+window.hideAddProblemPopup = function() {
     document.getElementById('addProblemOverlay').style.display = 'none';
     document.getElementById('addProblemPopup').classList.remove('active');
 }

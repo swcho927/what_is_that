@@ -164,7 +164,6 @@
     import { initializeApp }                                      from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, 
              signOut, updateProfile, getAdditionalUserInfo }     from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    // 🌟 1. 파이어베이스 데이터베이스(Firestore) 모듈 추가 수입
     import { getFirestore, doc, setDoc }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -179,7 +178,6 @@
 
     const app      = initializeApp(firebaseConfig);
     const auth     = getAuth(app);
-    // 🌟 2. 데이터베이스 객체 초기화
     const db       = getFirestore(app);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
@@ -224,19 +222,19 @@
         try {
             const user = auth.currentUser;
 
-            // 1) 인증 프로필에 닉네임 설정 (기본 세션용)
             await updateProfile(user, {
                 displayName: nickname
             });
 
-            // 🌟 3) [핵심] Firestore 데이터베이스의 'users' 방에 유저 고유 UID 이름으로 데이터 통째로 저장!
+            // 🌟 초기 레이팅 0점 포함하여 데이터베이스 완전히 저장!
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
                 email: user.email,
                 name: name,
                 nickname: nickname,
                 birth: birth,
-                joinedAt: new Date() // 가입일시 자동 저장
+                rating: 0, 
+                joinedAt: new Date()
             });
 
             alert(`${nickname}님, 가입을 환영합니다! 🎉`);
@@ -247,6 +245,5 @@
         }
     };
 </script>
-
 </body>
 </html>

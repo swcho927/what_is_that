@@ -106,9 +106,10 @@
 </div>
 
 <script type="module">
-    import { initializeApp }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getAuth, signInWithPopup,
-             GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import { initializeApp }                                      from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, 
+             onAuthStateChanged, signOut, deleteUser,
+             getAdditionalUserInfo }                              from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
@@ -124,8 +125,14 @@
     const auth     = getAuth(app);
     const provider = new GoogleAuthProvider();
 
+    // 로그인 검사 중 자동 튕김을 막기 위한 플래그
+    let isProcessingLogin = false;
+
     onAuthStateChanged(auth, (user) => {
-        if (user) location.href = 'index.html';
+        // 이미 로그인된 세션이 있고, 현재 로그인 버튼을 새로 누른 게 아닐 때만 메인으로 이동
+        if (user && !isProcessingLogin) {
+            location.href = 'index.html';
+        }
     });
 
     function showError(msg) {
@@ -135,11 +142,31 @@
     }
 
     window.loginGoogle = async function() {
+        isProcessingLogin = true; 
         try {
-            await signInWithPopup(auth, provider);
-            location.href = 'index.html';
+            const result = await signInWithPopup(auth, provider);
+            const additionalInfo = getAdditionalUserInfo(result);
+
+            // 🚨 가입 이력이 없는 신규 유저일 때 컷!
+            if (additionalInfo && additionalInfo.isNewUser) {
+                alert("그 뭐냐... 가입되지 않은 계정입니다. 회원가입 페이지에서 닉네임을 먼저 등록해 주세요!");
+                
+                const currentUser = auth.currentUser;
+                if (currentUser) {
+                    await deleteUser(currentUser); // 찌꺼기 계정 폭파
+                    await signOut(auth);          // 인증 해제
+                }
+                location.href = 'signup.html';
+            } 
+            // ✅ 정상 기존 유저 통과
+            else {
+                alert(`반갑습니다, ${auth.currentUser.displayName || '유저'}님! 🚀`);
+                location.href = 'index.html';
+            }
         } catch(e) {
+            isProcessingLogin = false;
             showError('구글 로그인 실패: ' + e.message);
+            await signOut(auth).catch(() => {});
         }
     };
 </script>

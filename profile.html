@@ -6,23 +6,24 @@
     <link rel="stylesheet" href="style.css">
     <script>window.PROBLEMS = window.PROBLEMS || {};</script>
     <style>
-        .profile-wrap { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 52px); margin-top: 52px; padding: 20px; }
-        .profile-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 100%; max-width: 550px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24); }
-        .profile-header-ui { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 24px; }
-        .profile-nickname { font-size: 2.2rem; font-weight: 900; color: var(--text); letter-spacing: -1px; }
-        .tier-tag { font-size: 1.3rem; font-weight: 800; padding: 6px 14px; background: rgba(255, 255, 255, 0.05); border-radius: 30px; border: 1px solid currentColor; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
-        .stat-box { background: var(--bg-main); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: left; }
-        .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; }
-        .stat-value { font-size: 1.3rem; font-weight: 800; color: var(--text); }
-        .progress-section { margin-top: 32px; }
-        .progress-meta-ui { display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.9rem; margin-bottom: 10px; }
-        .progress-tier-side { display: flex; flex-direction: column; font-weight: bold; }
-        .progress-my-center { text-align: center; font-weight: bold; }
-        .progress-my-center .my-remain { font-size: 0.8rem; color: #3fb950; margin-top: 2px; font-weight: 800; }
-        .rating-bar-bg { width: 100%; height: 14px; background: #21262d; border-radius: 10px; overflow: hidden; border: 1px solid #30363d; box-sizing: border-box; }
-        .rating-bar-fill { height: 100%; width: 0%; border-radius: 10px; transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
-        #loading { text-align: center; color: var(--text-muted); font-weight: bold; }
+        .profile-wrap { display:flex; justify-content:center; align-items:center; min-height:calc(100vh - 52px); margin-top:52px; padding:20px; }
+        .profile-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:40px; width:100%; max-width:550px; box-shadow:0 8px 32px rgba(0,0,0,0.24); }
+        .profile-header-ui { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:24px; }
+        .profile-nickname { font-size:2.2rem; font-weight:900; color:var(--text); letter-spacing:-1px; }
+        .tier-tag { font-size:1.3rem; font-weight:800; padding:6px 14px; background:rgba(255,255,255,0.05); border-radius:30px; border:1px solid currentColor; }
+        .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:20px; }
+        .stat-box { background:var(--bg-main); border:1px solid var(--border); border-radius:10px; padding:16px; }
+        .stat-label { font-size:0.8rem; color:var(--text-muted); font-weight:700; margin-bottom:4px; }
+        .stat-value { font-size:1.3rem; font-weight:800; color:var(--text); }
+        .progress-section { margin-top:32px; }
+        .progress-meta { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:10px; }
+        .tier-side { display:flex; flex-direction:column; font-weight:bold; }
+        .tier-side small { font-size:0.75rem; color:var(--text-muted); }
+        .center-info { text-align:center; font-weight:bold; }
+        .remain-text { font-size:0.8rem; color:#3fb950; margin-top:2px; font-weight:800; }
+        .rating-bar-bg { width:100%; height:14px; background:#21262d; border-radius:10px; overflow:hidden; border:1px solid #30363d; }
+        .rating-bar-fill { height:100%; width:0%; border-radius:10px; transition:width 1.2s cubic-bezier(0.4,0,0.2,1); }
+        #loading { text-align:center; color:var(--text-muted); font-weight:bold; }
     </style>
 </head>
 <body>
@@ -30,53 +31,50 @@
 <div class="topbar">
     <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
     <div class="topbar-divider"></div>
-    <span class="topbar-sub">유저 프로필 정보</span>
+    <span class="topbar-sub">유저 프로필</span>
 </div>
 
 <div class="profile-wrap">
     <div class="profile-card">
-        <div id="loading">유저 인증 세션 및 데이터 로드 중...</div>
-        
-        <div id="profile-content" style="display: none;">
+        <div id="loading">데이터 로드 중...</div>
+        <div id="profile-content" style="display:none;">
             <div class="profile-header-ui">
                 <div class="profile-nickname" id="prof-nickname">-</div>
                 <div class="tier-tag" id="tier-name">-</div>
             </div>
-            
             <div class="stats-grid">
                 <div class="stat-box">
-                    <div class="stat-label">🔥 현재 실시간 레이팅</div>
-                    <div class="stat-value" id="stat-rating">0 점</div>
+                    <div class="stat-label">🔥 레이팅</div>
+                    <div class="stat-value" id="stat-rating">-</div>
                 </div>
                 <div class="stat-box">
-                    <div class="stat-label">✅ 해결한 문제 수</div>
-                    <div class="stat-value" id="stat-solved">0 개</div>
+                    <div class="stat-label">✅ 해결한 문제</div>
+                    <div class="stat-value" id="stat-solved">-</div>
                 </div>
-                <div class="stat-box" style="grid-column: span 2;">
+                <div class="stat-box" style="grid-column:span 2;">
                     <div class="stat-label">📅 가입 일시</div>
-                    <div class="stat-value" id="stat-date" style="font-size:1rem; color:var(--text-muted)">-</div>
+                    <div class="stat-value" id="stat-date" style="font-size:1rem;color:var(--text-muted);">-</div>
                 </div>
             </div>
-
             <div class="progress-section">
-                <div class="progress-meta-ui">
-                    <div class="progress-tier-side" style="text-align: left;">
+                <div class="progress-meta">
+                    <div class="tier-side">
                         <span id="prog-curr-tier">-</span>
-                        <span id="prog-curr-min" style="font-size:0.75rem; color:var(--text-muted)">0점</span>
+                        <small id="prog-curr-min">0점</small>
                     </div>
-                    <div class="progress-my-center">
+                    <div class="center-info">
                         <div><span id="prog-my-rating">0</span>점</div>
-                        <div class="my-remain" id="prog-remain-text">-</div>
+                        <div class="remain-text" id="prog-remain-text">-</div>
                     </div>
-                    <div class="progress-tier-side" style="text-align: right;">
+                    <div class="tier-side" style="text-align:right;">
                         <span id="prog-next-tier">-</span>
-                        <span id="prog-next-min" style="font-size:0.75rem; color:var(--text-muted)">0점</span>
+                        <small id="prog-next-min">0점</small>
                     </div>
                 </div>
                 <div class="rating-bar-bg">
                     <div class="rating-bar-fill" id="rating-bar"></div>
                 </div>
-                <div style="text-align: right; font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">
+                <div style="text-align:right;font-size:0.75rem;color:var(--text-muted);margin-top:5px;">
                     구간 진행도: <span id="progress-percent">0%</span>
                 </div>
             </div>
@@ -85,133 +83,114 @@
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { initializeApp }         from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
-        authDomain:        "what-is-that-3cc48.firebaseapp.com",
-        projectId:         "what-is-that-3cc48",
-        storageBucket:     "what-is-that-3cc48.firebasestorage.app",
-        messagingSenderId: "745704527046",
-        appId:             "1:745704527046:web:1ef97739fdc1348c96b3c7"
+        apiKey: "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA", authDomain: "what-is-that-3cc48.firebaseapp.com",
+        projectId: "what-is-that-3cc48", storageBucket: "what-is-that-3cc48.firebasestorage.app",
+        messagingSenderId: "745704527046", appId: "1:745704527046:web:1ef97739fdc1348c96b3c7"
     };
 
-    const app = initializeApp(firebaseConfig);
+    const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db   = getFirestore(app);
 
-    const PROBLEM_TIER_REWARDS = {
-        "Bronze V": 1, "Bronze IV": 2, "Bronze III": 3, "Bronze II": 4, "Bronze I": 5,
-        "Silver V": 6, "Silver IV": 8, "Silver III": 10, "Silver II": 12, "Silver I": 14,
-        "Gold V": 15, "Gold IV": 18, "Gold III": 21, "Gold II": 24, "Gold I": 27,
-        "Platinum V": 32, "Platinum IV": 36, "Platinum III": 40, "Platinum II": 44, "Platinum I": 48,
-        "Diamond V": 60, "Diamond IV": 65, "Diamond III": 70, "Diamond II": 75, "Diamond I": 80,
-        "Ruby V": 100, "Ruby IV": 110, "Ruby III": 120, "Ruby II": 130, "Ruby I": 140
+    const REWARDS = {
+        "Bronze V":1,"Bronze IV":2,"Bronze III":3,"Bronze II":4,"Bronze I":5,
+        "Silver V":6,"Silver IV":8,"Silver III":10,"Silver II":12,"Silver I":14,
+        "Gold V":15,"Gold IV":18,"Gold III":21,"Gold II":24,"Gold I":27,
+        "Platinum V":32,"Platinum IV":36,"Platinum III":40,"Platinum II":44,"Platinum I":48,
+        "Diamond V":60,"Diamond IV":65,"Diamond III":70,"Diamond II":75,"Diamond I":80,
+        "Ruby V":100,"Ruby IV":110,"Ruby III":120,"Ruby II":130,"Ruby I":140
     };
 
     const TIERS = [
-        { name: "Bronze V", min: 0, color: "#ad5600" }, { name: "Bronze IV", min: 40, color: "#ad5600" }, { name: "Bronze III", min: 60, color: "#ad5600" }, { name: "Bronze II", min: 80, color: "#ad5600" }, { name: "Bronze I", min: 100, color: "#ad5600" },
-        { name: "Silver V", min: 120, color: "#435f7a" }, { name: "Silver IV", min: 160, color: "#435f7a" }, { name: "Silver III", min: 200, color: "#435f7a" }, { name: "Silver II", min: 240, color: "#435f7a" }, { name: "Silver I", min: 280, color: "#435f7a" },
-        { name: "Gold V", min: 300, color: "#ec9a00" }, { name: "Gold IV", min: 360, color: "#ec9a00" }, { name: "Gold III", min: 420, color: "#ec9a00" }, { name: "Gold II", min: 480, color: "#ec9a00" }, { name: "Gold I", min: 540, color: "#ec9a00" },
-        { name: "Platinum V", min: 640, color: "#27e2a4" }, { name: "Platinum IV", min: 720, color: "#27e2a4" }, { name: "Platinum III", min: 800, color: "#27e2a4" }, { name: "Platinum II", min: 880, color: "#27e2a4" }, { name: "Platinum I", min: 960, color: "#27e2a4" },
-        { name: "Diamond V", min: 1200, color: "#00b4fc" }, { name: "Diamond IV", min: 1300, color: "#00b4fc" }, { name: "Diamond III", min: 1400, color: "#00b4fc" }, { name: "Diamond II", min: 1500, color: "#00b4fc" }, { name: "Diamond I", min: 1600, color: "#00b4fc" },
-        { name: "Ruby V", min: 2000, color: "#ff0062" }, { name: "Ruby IV", min: 2200, color: "#ff0062" }, { name: "Ruby III", min: 2400, color: "#ff0062" }, { name: "Ruby II", min: 2600, color: "#ff0062" }, { name: "Ruby I", min: 2800, color: "#ff0062" }
+        {name:"Bronze V",min:0,color:"#ad5600"},{name:"Bronze IV",min:40,color:"#ad5600"},{name:"Bronze III",min:60,color:"#ad5600"},{name:"Bronze II",min:80,color:"#ad5600"},{name:"Bronze I",min:100,color:"#ad5600"},
+        {name:"Silver V",min:120,color:"#435f7a"},{name:"Silver IV",min:160,color:"#435f7a"},{name:"Silver III",min:200,color:"#435f7a"},{name:"Silver II",min:240,color:"#435f7a"},{name:"Silver I",min:280,color:"#435f7a"},
+        {name:"Gold V",min:300,color:"#ec9a00"},{name:"Gold IV",min:360,color:"#ec9a00"},{name:"Gold III",min:420,color:"#ec9a00"},{name:"Gold II",min:480,color:"#ec9a00"},{name:"Gold I",min:540,color:"#ec9a00"},
+        {name:"Platinum V",min:640,color:"#27e2a4"},{name:"Platinum IV",min:720,color:"#27e2a4"},{name:"Platinum III",min:800,color:"#27e2a4"},{name:"Platinum II",min:880,color:"#27e2a4"},{name:"Platinum I",min:960,color:"#27e2a4"},
+        {name:"Diamond V",min:1200,color:"#00b4fc"},{name:"Diamond IV",min:1300,color:"#00b4fc"},{name:"Diamond III",min:1400,color:"#00b4fc"},{name:"Diamond II",min:1500,color:"#00b4fc"},{name:"Diamond I",min:1600,color:"#00b4fc"},
+        {name:"Ruby V",min:2000,color:"#ff0062"},{name:"Ruby IV",min:2200,color:"#ff0062"},{name:"Ruby III",min:2400,color:"#ff0062"},{name:"Ruby II",min:2600,color:"#ff0062"},{name:"Ruby I",min:2800,color:"#ff0062"}
     ];
 
-    function loadProblemScript(probId) {
-        return new Promise((resolve) => {
-            if (window.PROBLEMS && window.PROBLEMS[probId]) { resolve(); return; }
-            const script = document.createElement('script');
-            script.src = `problems/${probId}.js`;
-            script.onload = () => resolve();
-            script.onerror = () => { console.warn(`스크립트 유실: ${probId}.js`); resolve(); };
-            document.head.appendChild(script);
+    function getTierInfo(rating) {
+        let idx = 0;
+        for (let i = TIERS.length - 1; i >= 0; i--) { if (rating >= TIERS[i].min) { idx = i; break; } }
+        return { curr: TIERS[idx], next: TIERS[idx + 1] || null };
+    }
+
+    function loadScript(probId) {
+        return new Promise(resolve => {
+            if (window.PROBLEMS?.[probId]) { resolve(); return; }
+            const s = document.createElement('script');
+            s.src = `problems/${probId}.js`;
+            s.onload = resolve;
+            s.onerror = () => { console.warn(`스크립트 유실: ${probId}.js`); resolve(); };
+            document.head.appendChild(s);
         });
+    }
+
+    function setText(id, text, color) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = text;
+        if (color) el.style.color = color;
     }
 
     onAuthStateChanged(auth, async (user) => {
         if (!user) { alert("로그인이 필요합니다."); location.href = 'login.html'; return; }
+
         try {
-            // 🌟 주소창 쿼리 스트링 파라미터(?uid=...)에서 목표 대상 식별자 분리 추출
-            const urlParams = new URLSearchParams(location.search);
-            const targetUid = urlParams.get('uid') || user.uid;
+            const targetUid = new URLSearchParams(location.search).get('uid') || user.uid;
+            const snap = await getDoc(doc(db, "users", targetUid));
 
-            // 🌟 하드코딩된 user.uid를 targetUid 변수로 승격하여 호출 doc 타겟팅 스위칭
-            const userDoc = await getDoc(doc(db, "users", targetUid));
-            let rating = 0;
-            // 🌟 내 계정이 아닌 타인 조회 시 내 캐시 닉네임이 오염되어 오버라이딩되는 버그 예방 조건문 패치
-            let nickname = (targetUid === user.uid) ? (user.displayName || "익명") : "익명";
-            let solvedCount = 0, formattedDate = "-";
-
-            if (userDoc.exists()) {
-                const data = userDoc.data();
-                nickname = data.nickname || data.email || nickname;
-                const solvedProblems = data.solvedProblems || [];
-                solvedCount = solvedProblems.length;
-
-                await Promise.all(solvedProblems.map(id => loadProblemScript(id)));
-
-                if (window.PROBLEMS) {
-                    solvedProblems.forEach(id => {
-                        const p = window.PROBLEMS[id];
-                        if (p && p.tier) rating += PROBLEM_TIER_REWARDS[`${p.tier.name} ${p.tier.level}`] || 0;
-                    });
-                }
-                if (data.joinedAt) {
-                    const dateObj = data.joinedAt.toDate ? data.joinedAt.toDate() : new Date(data.joinedAt);
-                    formattedDate = dateObj.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-                }
-            } else {
-                // 🌟 유효하지 않은 잘못된 UID 파라미터 입력 시 예외 처리 인터셉트 가드
-                alert("존재하지 않는 유저이거나 탈퇴한 회원의 데이터입니다.");
+            if (!snap.exists()) {
+                alert("존재하지 않는 유저입니다.");
                 location.href = 'ranking.html';
                 return;
             }
 
-            let currentTierIdx = TIERS.findIndex((t, idx) => rating >= t.min && (idx === TIERS.length - 1 || rating < TIERS[idx + 1].min));
-            if (currentTierIdx === -1) currentTierIdx = 0;
+            const data = snap.data();
+            const nickname = data.nickname || data.email || "익명";
+            const solved   = data.solvedProblems || [];
 
-            const currentTier = TIERS[currentTierIdx], nextTier = TIERS[currentTierIdx + 1] || null;
-            let progress = 0, remainText = "";
+            await Promise.all(solved.map(loadScript));
 
-            if (nextTier) {
-                progress = (((rating - currentTier.min) / (nextTier.min - currentTier.min)) * 100).toFixed(1);
-                remainText = `+${nextTier.min - rating}점 시 승급`;
-            } else { progress = 100.0; remainText = "최고 등급 달성 👑"; }
+            const rating = solved.reduce((sum, id) => {
+                const p = window.PROBLEMS?.[id];
+                return sum + (p?.tier ? (REWARDS[`${p.tier.name} ${p.tier.level}`] || 0) : 0);
+            }, 0);
 
-            document.getElementById('prof-nickname').textContent = nickname;
-            document.getElementById('tier-name').textContent = currentTier.name;
-            document.getElementById('tier-name').style.color = currentTier.color;
-            document.getElementById('stat-rating').textContent = `${rating} 점`;
-            document.getElementById('stat-solved').textContent = `${solvedCount} 개`;
-            document.getElementById('stat-date').textContent = formattedDate;
-            
-            document.getElementById('prog-curr-tier').textContent = currentTier.name;
-            document.getElementById('prog-curr-tier').style.color = currentTier.color;
-            document.getElementById('prog-curr-min').textContent = `${currentTier.min}점`;
+            const { curr, next } = getTierInfo(rating);
+            const progress = next ? (((rating - curr.min) / (next.min - curr.min)) * 100).toFixed(1) : 100;
+            const remainText = next ? `+${next.min - rating}점 시 승급` : "최고 등급 달성 👑";
+            const date = data.joinedAt
+                ? (data.joinedAt.toDate?.() ?? new Date(data.joinedAt)).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'})
+                : "-";
 
-            if (nextTier) {
-                document.getElementById('prog-next-tier').textContent = nextTier.name;
-                document.getElementById('prog-next-tier').style.color = nextTier.color;
-                document.getElementById('prog-next-min').textContent = `${nextTier.min}점`;
-            } else {
-                document.getElementById('prog-next-tier').textContent = "MAX";
-                document.getElementById('prog-next-min').textContent = "";
-            }
+            setText('prof-nickname', nickname);
+            setText('tier-name',     curr.name,  curr.color);
+            setText('stat-rating',   `${rating} 점`);
+            setText('stat-solved',   `${solved.length} 개`);
+            setText('stat-date',     date);
+            setText('prog-curr-tier', curr.name, curr.color);
+            setText('prog-curr-min',  `${curr.min}점`);
+            setText('prog-next-tier', next?.name ?? "MAX", next?.color ?? curr.color);
+            setText('prog-next-min',  next ? `${next.min}점` : "");
+            setText('prog-my-rating', rating);
+            setText('prog-remain-text', remainText);
+            setText('progress-percent', progress + '%');
 
-            document.getElementById('prog-my-rating').textContent = rating;
-            document.getElementById('prog-remain-text').textContent = remainText;
-            document.getElementById('progress-percent').textContent = progress + '%';
-            
             const bar = document.getElementById('rating-bar');
-            bar.style.backgroundColor = currentTier.color;
+            bar.style.backgroundColor = curr.color;
             setTimeout(() => { bar.style.width = (progress == 0 ? 1.5 : progress) + '%'; }, 100);
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('profile-content').style.display = 'block';
-        } catch (e) { console.error(e); alert("프로필 데이터 동기화 도중 오류가 발생했습니다."); }
+
+        } catch(e) { console.error(e); alert("프로필 로드 중 오류가 발생했습니다."); }
     });
 </script>
 </body>

@@ -138,7 +138,7 @@
         timeLimit:   1,
         memoryLimit: 256,
 
-        tier: { name: "Gold", level: "III" },
+        tier: { name: "Gold", level: "II" },
 
         description: `폭풍우가 지나간 대호수에는 오래된 노래가 남는다.<br>
 항해자들은 이를 "파도의 만가"라고 부른다.<br>

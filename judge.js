@@ -1,9 +1,9 @@
 // ════════════════════════════════════════════════════════
-//  judge.js  ─  그뭐냐 채점 엔진 (성공 박스 마커 반영 / 팝업 전면 제거)
+//  judge.js  ─  그뭐냐 채점 엔진 (동적 레이팅 시스템 반영)
 // ════════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
@@ -18,15 +18,6 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
-
-const PROBLEM_TIER_REWARDS = {
-    "Bronze V": 1,   "Bronze IV": 2,   "Bronze III": 3,   "Bronze II": 4,   "Bronze I": 5,
-    "Silver V": 6,   "Silver IV": 8,   "Silver III": 10,  "Silver II": 12,  "Silver I": 14,
-    "Gold V": 15,    "Gold IV": 18,    "Gold III": 21,    "Gold II": 24,    "Gold I": 27,
-    "Platinum V": 32, "Platinum IV": 36, "Platinum III": 40, "Platinum II": 44, "Platinum I": 48,
-    "Diamond V": 60,  "Diamond IV": 65,  "Diamond III": 70,  "Diamond II": 75,  "Diamond I": 80,
-    "Ruby V": 100,    "Ruby IV": 110,    "Ruby III": 120,   "Ruby II": 130,   "Ruby I": 140
-};
 
 // 유저 상태 감시 및 성공 마커 노출
 onAuthStateChanged(auth, async (user) => {
@@ -44,7 +35,6 @@ onAuthStateChanged(auth, async (user) => {
                 const solvedProblems = userDoc.data().solvedProblems || [];
                 solvedProblems.forEach(probId => {
                     const marker = document.getElementById(`solved-marker-${probId}`);
-                    // 이미 맞춘 문제는 로딩될 때 'inline-block'으로 보여줌
                     if (marker) marker.style.display = 'inline-block';
                 });
             }
@@ -56,15 +46,10 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// 레이팅 적립 로직 (팝업창 전면 제거)
+// 🌟 [수정] 푼 문제 ID 기록 함수 (고정 점수 누적 제거, 팝업 없음)
 async function awardRating(prob) {
     const user = auth.currentUser;
     if (!user) return;
-
-    if (!prob.tier || !prob.tier.name || !prob.tier.level) return;
-    
-    const tierKey = prob.tier.name + " " + prob.tier.level;
-    const pointsToAdd = PROBLEM_TIER_REWARDS[tierKey] || 0;
 
     try {
         const userRef = doc(db, "users", user.uid);
@@ -72,26 +57,21 @@ async function awardRating(prob) {
         
         if (userDoc.exists()) {
             const solvedProblems = userDoc.data().solvedProblems || [];
-            
-            // 🚨 [수정] 다시 푼 문제일 때 띄우던 alert 팝업 삭제
             if (solvedProblems.includes(String(prob.id))) {
-                return; 
+                return; // 이미 푼 문제면 조용히 리턴
             }
         }
 
-        if (pointsToAdd > 0) {
-            await updateDoc(userRef, {
-                rating: increment(pointsToAdd),
-                solvedProblems: arrayUnion(String(prob.id))
-            });
-            
-            const marker = document.getElementById(`solved-marker-${prob.id}`);
-            if (marker) marker.style.display = 'inline-block';
+        // 오직 solvedProblems 배열에 문제 ID만 추가합니다.
+        await updateDoc(userRef, {
+            solvedProblems: arrayUnion(String(prob.id))
+        });
+        
+        const marker = document.getElementById(`solved-marker-${prob.id}`);
+        if (marker) marker.style.display = 'inline-block';
 
-            // 🚨 [수정] 정답 맞췄을 때 띄우던 alert 팝업 삭제
-        }
     } catch (e) {
-        console.error("레이팅 동기화 처리 에러:", e);
+        console.error("푼 문제 데이터베이스 동기화 에러:", e);
     }
 }
 
@@ -752,7 +732,6 @@ document.addEventListener('DOMContentLoaded', function () {
         tabEl.id        = 'tab-' + probId;
         tabEl.setAttribute('onclick', "switchProblem('" + probId + "')");
         
-        // 🌟 [수정 1] 체크 표시 대신 초록색 '성공' 보더 박스 디자인 적용 (기본 숨김)
         tabEl.innerHTML =
             '<span class="sidebar-num">'    + prob.id    + '</span>' +
             '<span class="sidebar-title">' + prob.title + '</span>' +

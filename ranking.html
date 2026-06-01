@@ -7,53 +7,55 @@
     <script>window.PROBLEMS = window.PROBLEMS || {};</script>
     <style>
         .ranking-container {
-            max-width: 900px;
-            margin: 80px auto cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 20px;
+            max-width: 1150px; /* 표를 대폭 넓게 키웠습니다 */
+            margin: 110px auto 50px auto; /* 위쪽 여백을 110px 주어 상단바에 잘리는 문제를 완벽하게 해결하고 자동 정렬했습니다 */
+            padding: 0 30px;
+            box-sizing: border-box;
         }
         .ranking-title {
-            font-size: 1.8rem;
-            font-weight: 800;
+            font-size: 2.2rem; /* 제목 크기를 더 키웠습니다 */
+            font-weight: 900;
             color: var(--text);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
         .ranking-table {
             width: 100%;
             border-collapse: collapse;
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            font-size: 1.05rem; /* 표 내부 글씨를 더 크게 설정했습니다 */
         }
         .ranking-table th, .ranking-table td {
-            padding: 14px 20px;
+            padding: 18px 24px; /* 행 패딩을 늘려 표가 훨씬 크고 시원해 보입니다 */
             text-align: center;
             border-bottom: 1px solid var(--border);
         }
         .ranking-table th {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.03);
             color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 700;
+            font-size: 0.95rem;
+            font-weight: 800;
             text-transform: uppercase;
         }
         .ranking-table tbody tr:last-child td {
             border-bottom: none;
         }
         .ranking-table tbody tr:hover {
-            background: rgba(255, 255, 255, 0.01);
+            background: rgba(255, 255, 255, 0.02);
         }
         .rank-number {
-            font-weight: 800;
-            font-size: 1.1rem;
+            font-weight: 900;
+            font-size: 1.2rem;
         }
-        .rank-1 { color: #ffd700; } /* 금메달 효과 */
-        .rank-2 { color: #c0c0c0; } /* 은메달 효과 */
-        .rank-3 { color: #cd7f32; } /* 동메달 효과 */
+        .rank-1 { color: #ffd700; font-size: 1.35rem; }
+        .rank-2 { color: #c0c0c0; font-size: 1.25rem; }
+        .rank-3 { color: #cd7f32; font-size: 1.20rem; }
         
         .rank-nickname {
             font-weight: 700;
@@ -65,13 +67,14 @@
         }
         .tier-text {
             font-weight: 800;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
         #ranking-loading {
             text-align: center;
             color: var(--text-muted);
             font-weight: bold;
-            padding: 40px;
+            padding: 60px;
+            font-size: 1.2rem;
         }
     </style>
 </head>
@@ -81,6 +84,8 @@
     <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
     <div class="topbar-divider"></div>
     <span class="topbar-sub">실시간 유저 랭킹</span>
+    <button class="topbar-btn" onclick="location.href='ranking.html'" style="margin-left: 10px;">랭킹</button>
+    
     <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
         <span id="user-info" style="display:none; font-size:0.82rem; color:var(--text-muted);"></span>
         <button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>
@@ -98,8 +103,8 @@
         <thead>
             <tr>
                 <th style="width: 15%;">등수</th>
-                <th style="width: 40%;">닉네임</th>
-                <th style="width: 25%;">티어</th>
+                <th style="width: 45%;">닉네임</th>
+                <th style="width: 20%;">티어</th>
                 <th style="width: 20%;">레이팅</th>
             </tr>
         </thead>
@@ -144,19 +149,17 @@
         { name: "Ruby V", min: 2000, color: "#ff0062" }, { name: "Ruby IV", min: 2200, color: "#ff0062" }, { name: "Ruby III", min: 2400, color: "#ff0062" }, { name: "Ruby II", min: 2600, color: "#ff0062" }, { name: "Ruby I", min: 2800, color: "#ff0062" }
     ];
 
-    // 문제 스크립트 로드 함수
     function loadProblemScript(probId) {
         return new Promise((resolve) => {
             if (window.PROBLEMS && window.PROBLEMS[probId]) { resolve(); return; }
             const script = document.createElement('script');
             script.src = `problems/${probId}.js`;
             script.onload = () => resolve();
-            script.onerror = () => { resolve(); }; // 실패하더라도 멈추지 않음
+            script.onerror = () => resolve();
             document.head.appendChild(script);
         });
     }
 
-    // 상단바 로그인 세션 감시
     onAuthStateChanged(auth, (user) => {
         const userInfo = document.getElementById('user-info');
         const btnLogin = document.getElementById('btn-login');
@@ -187,14 +190,12 @@
         loadRankingData();
     });
 
-    // 전 전체 유저 불러오기 및 실시간 랭킹 연산 함수
     async function loadRankingData() {
         try {
             const querySnapshot = await getDocs(collection(db, "users"));
             let allUniqueProblems = new Set();
             let usersData = [];
 
-            // 1. 데이터 수집 및 모든 유저가 푼 유니크 문제 목록 취합
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 const solvedProblems = data.solvedProblems || [];
@@ -206,10 +207,8 @@
                 });
             });
 
-            // 2. 랭킹에 필요한 문제 스크립트 일괄 비동기 로드 (최적화)
             await Promise.all(Array.from(allUniqueProblems).map(id => loadProblemScript(id)));
 
-            // 3. 각 유저별 실시간 레이팅 계산 및 티어 매칭
             let rankedUsers = usersData.map(u => {
                 let rating = 0;
                 u.solvedProblems.forEach(id => {
@@ -230,17 +229,15 @@
                 };
             });
 
-            // 4. 레이팅 기준 내림차순 정렬
             rankedUsers.sort((a, b) => b.rating - a.rating);
 
-            // 5. 표에 바인딩 및 화면 노출
             const tbody = document.getElementById('ranking-tbody');
             tbody.innerHTML = "";
 
             rankedUsers.forEach((user, index) => {
                 const rank = index + 1;
                 let rankClass = "";
-                if (rank <= 3) rankClass = `rank-${rank}`; // 1, 2, 3등 메달 색상 효과
+                if (rank <= 3) rankClass = `rank-${rank}`;
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `

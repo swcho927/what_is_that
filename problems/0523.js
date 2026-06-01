@@ -222,7 +222,7 @@
 
     window.PROBLEMS['0523'] = {
 
-        id:          523,
+        id:          "0523",
         title:       "얼척이를 잡아라",
         timeLimit:   1,
         memoryLimit: 256,

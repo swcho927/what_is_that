@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>프로필 - 그 뭐냐 Judge</title>
     <script>window.PROBLEMS = window.PROBLEMS || {};</script>
-    <script src="problems.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         .profile-wrap {
@@ -255,6 +254,24 @@
         { name: "Ruby I",     min: 2800, color: "#ff0062" }
     ];
 
+    // 🌟 [추가] 푼 문제 파일들을 동적으로 헤드에 주입하여 로드하는 헬퍼 함수
+    function loadProblemScript(probId) {
+        return new Promise((resolve) => {
+            if (window.PROBLEMS && window.PROBLEMS[probId]) {
+                resolve(); // 이미 로드되어 있다면 바로 패스
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = `problems/${probId}.js`; // 'problems/9001.js' 형태로 로드
+            script.onload = () => resolve();
+            script.onerror = () => {
+                console.warn(`문제 스크립트 로드 실패: problems/${probId}.js`);
+                resolve(); // 실 패하더라도 전체 루프가 멈추지 않도록 처리
+            };
+            document.head.appendChild(script);
+        });
+    }
+
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
             alert("로그인이 필요합니다.");
@@ -276,7 +293,10 @@
                 const solvedProblems = data.solvedProblems || [];
                 solvedCount = solvedProblems.length;
 
-                // 🌟 [순정 정순 결합 연산] 파이어베이스의 고유 문제 번호 키값을 대조하여 실시간 합산합니다
+                // 🌟 [핵심 변경] 유저가 풀이한 문제 파일들만 `problems/` 폴더에서 동적으로 동시 로드합니다.
+                await Promise.all(solvedProblems.map(probId => loadProblemScript(probId)));
+
+                // 🌟 동적 로드가 완료된 후 실시간 합산을 진행합니다
                 if (window.PROBLEMS) {
                     solvedProblems.forEach(probId => {
                         const prob = window.PROBLEMS[probId];

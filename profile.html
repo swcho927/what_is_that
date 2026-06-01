@@ -72,7 +72,6 @@
         .progress-section {
             margin-top: 32px;
         }
-        /* 🌟 요구사항 맞춤형 레이팅 메타 정보 구역 디자인 */
         .progress-meta-ui {
             display: flex;
             justify-content: space-between;
@@ -103,7 +102,7 @@
         }
         .progress-my-center .my-remain {
             font-size: 0.8rem;
-            color: #3fb950; /* 성공 마커와 통일감 있는 초록색 부여 */
+            color: #3fb950;
             margin-top: 2px;
             font-weight: 800;
         }
@@ -203,17 +202,15 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 🌟 어떤 티어 레벨 표기법(로마자, 아라비아 숫자)이 들어와도 점수를 뱉어내는 보상 딕셔너리 확장 장착
     const PROBLEM_TIER_REWARDS = {
-        "Bronze V": 1, "Bronze 5": 1, "Bronze IV": 2, "Bronze 4": 2, "Bronze III": 3, "Bronze 3": 3, "Bronze II": 4, "Bronze 2": 4, "Bronze I": 5, "Bronze 1": 5,
-        "Silver V": 6, "Silver 5": 6, "Silver IV": 8, "Silver 4": 8, "Silver III": 10, "Silver 3": 10, "Silver II": 12, "Silver 2": 12, "Silver I": 14, "Silver 1": 14,
-        "Gold V": 15, "Gold 5": 15, "Gold IV": 18, "Gold 4": 18, "Gold III": 21, "Gold 3": 21, "Gold II": 24, "Gold 2": 24, "Gold I": 27, "Gold 1": 27,
-        "Platinum V": 32, "Platinum 5": 32, "Platinum IV": 36, "Platinum 4": 36, "Platinum III": 40, "Platinum 3": 40, "Platinum II": 44, "Platinum 2": 44, "Platinum I": 48, "Platinum 1": 48,
-        "Diamond V": 60, "Diamond 5": 60, "Diamond IV": 65, "Diamond 4": 65, "Diamond III": 70, "Diamond 3": 70, "Diamond II": 75, "Diamond 2": 75, "Diamond I": 80, "Diamond 1": 80,
-        "Ruby V": 100, "Ruby 5": 100, "Ruby IV": 110, "Ruby 4": 110, "Ruby III": 120, "Ruby 3": 120, "Ruby II": 130, "Ruby 2": 130, "Ruby I": 140, "Ruby 1": 140
+        "Bronze V": 1,   "Bronze IV": 2,   "Bronze III": 3,   "Bronze II": 4,   "Bronze I": 5,
+        "Silver V": 6,   "Silver IV": 8,   "Silver III": 10,  "Silver II": 12,  "Silver I": 14,
+        "Gold V": 15,    "Gold IV": 18,    "Gold III": 21,    "Gold II": 24,    "Gold I": 27,
+        "Platinum V": 32, "Platinum IV": 36, "Platinum III": 40, "Platinum II": 44, "Platinum I": 48,
+        "Diamond V": 60,  "Diamond IV": 65,  "Diamond III": 70,  "Diamond II": 75,  "Diamond I": 80,
+        "Ruby V": 100,    "Ruby IV": 110,    "Ruby III": 120,   "Ruby II": 130,   "Ruby I": 140
     };
 
-    // 디렉터님의 순정 고유 컷라인 스케일 유지
     const TIERS = [
         { name: "Bronze V",   min: 0,    color: "#ad5600" },
         { name: "Bronze IV",  min: 40,   color: "#ad5600" },
@@ -266,9 +263,6 @@
             let solvedCount = 0;
             let formattedDate = "-";
 
-            // 🌟 [안전 모듈] 글로벌 스코프 문제 객체(window.PROBLEMS) 강제 주입 유연화 대응
-            const globalProblems = window.PROBLEMS || (typeof PROBLEMS !== 'undefined' ? PROBLEMS : null);
-
             if (userDoc.exists()) {
                 const data = userDoc.data();
                 nickname = data.nickname || nickname;
@@ -276,13 +270,17 @@
                 const solvedProblems = data.solvedProblems || [];
                 solvedCount = solvedProblems.length;
 
-                // 🌟 [1번 연산 완벽 바인딩] 문자열 ID와 숫자 Key 불일치 에러를 원천 봉쇄하는 매핑 룩업
-                if (globalProblems) {
+                if (window.PROBLEMS) {
+                    // 🌟 [핵심 수정] window.PROBLEMS 내부를 직접 순회하며 
+                    // 진짜 문제 번호(prob.id)가 유저가 푼 번호(probId)와 일치하는 문제를 역추적합니다.
+                    const problemsList = Object.values(window.PROBLEMS);
+
                     solvedProblems.forEach(probId => {
-                        const prob = globalProblems[probId] || globalProblems[Number(probId)];
-                        if (prob && prob.tier && prob.tier.name) {
-                            const lv = prob.tier.level !== undefined ? " " + prob.tier.level : "";
-                            const tierKey = (prob.tier.name + lv).trim();
+                        const prob = problemsList.find(p => p && String(p.id) === String(probId));
+                        
+                        if (prob && prob.tier && prob.tier.name && prob.tier.level) {
+                            // 순정 결합: "Bronze" + " " + "V" -> "Bronze V"
+                            const tierKey = prob.tier.name + " " + prob.tier.level;
                             rating += PROBLEM_TIER_REWARDS[tierKey] || 0;
                         }
                     });
@@ -294,7 +292,6 @@
                 }
             }
 
-            // 현재 등급 인덱스 산출
             let currentTierIdx = 0;
             for (let i = TIERS.length - 1; i >= 0; i--) {
                 if (rating >= TIERS[i].min) {
@@ -309,7 +306,6 @@
             let progress = 0;
             let remainText = "";
 
-            // 🌟 구간별 진행 스케일 정밀 분할 공식 대입
             if (nextTier) {
                 const range = nextTier.min - currentTier.min;
                 const currentProgressScore = rating - currentTier.min;
@@ -322,7 +318,6 @@
                 remainText = "최고 등급 달성 👑";
             }
 
-            // 스탯 매핑 데이터 뷰 바인딩
             document.getElementById('prof-nickname').textContent = nickname;
             document.getElementById('tier-name').textContent = currentTier.name;
             document.getElementById('tier-name').style.color = currentTier.color;
@@ -330,7 +325,6 @@
             document.getElementById('stat-solved').textContent = `${solvedCount} 개`;
             document.getElementById('stat-date').textContent = formattedDate;
             
-            // 🌟 [레이아웃 요구사항] 양옆 티어 라벨의 고유 텍스트와 테마 색상 동적 맵핑
             const currTierEl = document.getElementById('prog-curr-tier');
             currTierEl.textContent = currentTier.name;
             currTierEl.style.color = currentTier.color;
@@ -347,16 +341,13 @@
                 document.getElementById('prog-next-min').textContent = "";
             }
 
-            // 중앙 스크롤 데이터 수치 주입
             document.getElementById('prog-my-rating').textContent = rating;
             document.getElementById('prog-remain-text').textContent = remainText;
             document.getElementById('progress-percent').textContent = progress + '%';
             
-            // 🌟 [바 실종 해결 완결판] 최소 두께 강제 렌더링 세팅
             const bar = document.getElementById('rating-bar');
             bar.style.backgroundColor = currentTier.color;
             
-            // 0%일 때 바가 보이지 않는 현상을 해결하기 위해 최소 가로 너비를 보장합니다.
             const barWidth = parseFloat(progress) === 0 ? 1.5 : progress;
             setTimeout(() => { bar.style.width = barWidth + '%'; }, 100);
 

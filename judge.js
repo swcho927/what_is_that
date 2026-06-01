@@ -34,7 +34,7 @@ onAuthStateChanged(auth, async (user) => {
             if (userDoc.exists()) {
                 const solvedProblems = userDoc.data().solvedProblems || [];
                 solvedProblems.forEach(probId => {
-                    // 🌟 진짜 문제 번호(probId) 기반 마커 추적 가동
+                    // 🌟 진짜 문제 번호(probId) 기반 마커 추적
                     const marker = document.getElementById(`solved-marker-${probId}`);
                     if (marker) marker.style.display = 'inline-block';
                 });
@@ -59,16 +59,15 @@ async function awardRating(prob) {
         if (userDoc.exists()) {
             const solvedProblems = userDoc.data().solvedProblems || [];
             if (solvedProblems.includes(String(prob.id))) {
-                return; // 중복 풀이 시 조용히 리턴
+                return; // 중복 풀이 시 리턴
             }
         }
 
-        // solvedProblems 배열에 문제 ID 추가
+        // solvedProblems 배열에 진짜 문제 번호 ID 추가
         await updateDoc(userRef, {
             solvedProblems: arrayUnion(String(prob.id))
         });
         
-        // 🌟 정답 연동 시 진짜 문제 번호 엘리먼트를 활성화합니다
         const marker = document.getElementById(`solved-marker-${prob.id}`);
         if (marker) marker.style.display = 'inline-block';
 
@@ -734,7 +733,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tabEl.id        = 'tab-' + probId;
         tabEl.setAttribute('onclick', "switchProblem('" + probId + "')");
         
-        // 🌟 [버그 원인 전면 수정] id 명칭을 probId가 아닌 진짜 문제 번호인 prob.id 기준으로 동결합니다.
+        // 🌟 [전면 수정] 성공 마커 ID를 순서 키(probId)가 아닌 고유 문제 번호(prob.id)로 주입
         tabEl.innerHTML =
             '<span class="sidebar-num">'    + prob.id    + '</span>' +
             '<span class="sidebar-title">' + prob.title + '</span>' +

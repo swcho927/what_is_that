@@ -202,7 +202,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 디렉터님의 오리지널 로마자 매핑 테이블
     const PROBLEM_TIER_REWARDS = {
         "Bronze V": 1,   "Bronze IV": 2,   "Bronze III": 3,   "Bronze II": 4,   "Bronze I": 5,
         "Silver V": 6,   "Silver IV": 8,   "Silver III": 10,  "Silver II": 12,  "Silver I": 14,
@@ -271,7 +270,7 @@
                 const solvedProblems = data.solvedProblems || [];
                 solvedCount = solvedProblems.length;
 
-                // 🌟 [정밀 연산 수정] window.PROBLEMS의 배열/오브젝트 구조를 역추적하여 진짜 문제 번호(id)로 매칭합니다
+                // 🌟 [핵심 보완] window.PROBLEMS 구조(배열이든 오브젝트든)에 무관하게 p.id 매칭 연산 동적 수행
                 if (window.PROBLEMS) {
                     const problemsList = Object.values(window.PROBLEMS);
                     solvedProblems.forEach(probId => {

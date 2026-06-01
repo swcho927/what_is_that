@@ -57,7 +57,6 @@
             border-color: var(--blue);
             color: var(--blue);
         }
-        /* 🎨 새롭게 정의된 이쁜 입력 필드 스타일 */
         .auth-input-group {
             display: flex;
             flex-direction: column;
@@ -95,6 +94,7 @@
             color: var(--red);
             font-size: 0.82rem;
             display: none;
+            line-height: 1.4;
         }
         .auth-link {
             text-align: center;
@@ -138,7 +138,7 @@
             <div class="auth-link" style="margin-top: 16px;">이미 계정이 있으신가요? <a href="login.html">로그인</a></div>
         </div>
 
-        <div id="step-info" style="display: none; display: flex; flex-direction: column; gap: 16px;">
+        <div id="step-info" style="display: none; flex-direction: column; gap: 16px;">
             <div class="auth-input-group">
                 <label class="auth-input-label">이름</label>
                 <input type="text" id="reg-name" class="auth-input" placeholder="실명을 입력하세요">
@@ -178,7 +178,7 @@
     const app      = initializeApp(firebaseConfig);
     const auth     = getAuth(app);
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' }); // 여기도 팝업 고정 옵션 장착!
+    provider.setCustomParameters({ prompt: 'select_account' });
 
     function showError(msg) {
         var el = document.getElementById('error-msg');
@@ -186,21 +186,22 @@
         el.style.display = 'block';
     }
 
-    // 1단계: 구글 버튼 누를 때
+    // 1단계: 구글 로그인 연동 버튼 클릭 시
     window.signUpGoogle = async function() {
         try {
             document.getElementById('error-msg').style.display = 'none';
             const result = await signInWithPopup(auth, provider);
             const additionalInfo = getAdditionalUserInfo(result);
 
-            // 🚨 이미 가입된 기존 유저가 회원가입 창에 왔을 때
+            // 🚨 [조건 1] 이미 가입된 계정인 경우 (isNewUser가 false일 때)
             if (additionalInfo && !additionalInfo.isNewUser) {
-                alert("이미 가입된 계정입니다! 로그인 페이지로 이동합니다.");
-                location.href = 'login.html';
+                // 입력창을 열지 않고, 빨간색 에러 메시지 박스에 경고문을 고정합니다.
+                showError("이미 가입된 계정입니다. 로그인 페이지를 이용해 주세요.");
+                await signOut(auth); // 로그인 세션 해제
                 return;
             }
 
-            // 🎉 신규 유저라면 입력 창으로 폼 전환
+            // ✅ [조건 2] 처음 가입하는 신규 회원일 때만 입력 폼 노출
             document.getElementById('auth-sub-text').textContent = "그 뭐냐 Judge에 오신 것을 환영합니다! 상세 정보를 입력해 주세요.";
             document.getElementById('step-auth').style.display = 'none';
             document.getElementById('step-info').style.display = 'flex';
@@ -210,27 +211,24 @@
         }
     };
 
-    // 2단계: 최종 가입하기 버튼 누를 때
+    // 2단계: 정보 기입 후 가입 완료 버튼 클릭 시
     window.completeSignUp = async function() {
         const name     = document.getElementById('reg-name').value.trim();
         const nickname = document.getElementById('reg-nickname').value.trim();
         const birth    = document.getElementById('reg-birth').value;
 
-        // 벨리데이션 체크
         if (!name || !nickname || !birth) {
-            alert("그 뭐냐... 모든 정보를 전부 입력해 주셔야 가입이 끝납니다!");
+            alert("모든 정보를 전부 입력해 주셔야 가입이 완료됩니다.");
             return;
         }
 
         try {
-            // 파이어베이스 인증 프로필에 유저가 정한 '닉네임' 심어주기
+            // 파이어베이스 프로필에 닉네임 등록
             await updateProfile(auth.currentUser, {
                 displayName: nickname
             });
 
-            // 💡 [참고] 이름과 생년월일 데이터는 나중에 파이어베이스 Database(Firestore 등)를 
-            // 연결한 뒤 유저 테이블에 완전히 때려 박으면 됩니다. 우선 지금은 세션 성공 후 메인으로 보냅니다.
-            alert(`${nickname}님, 가입 정보가 성공적으로 등록되었습니다! 🎉`);
+            alert(`${nickname}님, 가입을 환영합니다! 🎉`);
             location.href = 'index.html';
 
         } catch(e) {

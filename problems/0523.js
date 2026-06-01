@@ -223,7 +223,7 @@
     window.PROBLEMS['0523'] = {
 
         id:          "0523",
-        title:       "얼척이를 잡아라",
+        title:       "십자인대",
         timeLimit:   1,
         memoryLimit: 256,
 

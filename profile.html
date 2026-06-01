@@ -202,6 +202,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // 디렉터님의 오리지널 로마자 매핑 테이블
     const PROBLEM_TIER_REWARDS = {
         "Bronze V": 1,   "Bronze IV": 2,   "Bronze III": 3,   "Bronze II": 4,   "Bronze I": 5,
         "Silver V": 6,   "Silver IV": 8,   "Silver III": 10,  "Silver II": 12,  "Silver I": 14,
@@ -270,16 +271,12 @@
                 const solvedProblems = data.solvedProblems || [];
                 solvedCount = solvedProblems.length;
 
+                // 🌟 [정밀 연산 수정] window.PROBLEMS의 배열/오브젝트 구조를 역추적하여 진짜 문제 번호(id)로 매칭합니다
                 if (window.PROBLEMS) {
-                    // 🌟 [핵심 수정] window.PROBLEMS 내부를 직접 순회하며 
-                    // 진짜 문제 번호(prob.id)가 유저가 푼 번호(probId)와 일치하는 문제를 역추적합니다.
                     const problemsList = Object.values(window.PROBLEMS);
-
                     solvedProblems.forEach(probId => {
                         const prob = problemsList.find(p => p && String(p.id) === String(probId));
-                        
                         if (prob && prob.tier && prob.tier.name && prob.tier.level) {
-                            // 순정 결합: "Bronze" + " " + "V" -> "Bronze V"
                             const tierKey = prob.tier.name + " " + prob.tier.level;
                             rating += PROBLEM_TIER_REWARDS[tierKey] || 0;
                         }

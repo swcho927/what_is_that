@@ -34,6 +34,7 @@ onAuthStateChanged(auth, async (user) => {
             if (userDoc.exists()) {
                 const solvedProblems = userDoc.data().solvedProblems || [];
                 solvedProblems.forEach(probId => {
+                    // 🌟 진짜 문제 번호(probId) 기반 마커 추적 가동
                     const marker = document.getElementById(`solved-marker-${probId}`);
                     if (marker) marker.style.display = 'inline-block';
                 });
@@ -46,7 +47,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// 🌟 [수정] 푼 문제 ID 기록 함수 (고정 점수 누적 제거, 팝업 없음)
+// 푼 문제 ID 기록 함수
 async function awardRating(prob) {
     const user = auth.currentUser;
     if (!user) return;
@@ -58,15 +59,16 @@ async function awardRating(prob) {
         if (userDoc.exists()) {
             const solvedProblems = userDoc.data().solvedProblems || [];
             if (solvedProblems.includes(String(prob.id))) {
-                return; // 이미 푼 문제면 조용히 리턴
+                return; // 중복 풀이 시 조용히 리턴
             }
         }
 
-        // 오직 solvedProblems 배열에 문제 ID만 추가합니다.
+        // solvedProblems 배열에 문제 ID 추가
         await updateDoc(userRef, {
             solvedProblems: arrayUnion(String(prob.id))
         });
         
+        // 🌟 정답 연동 시 진짜 문제 번호 엘리먼트를 활성화합니다
         const marker = document.getElementById(`solved-marker-${prob.id}`);
         if (marker) marker.style.display = 'inline-block';
 
@@ -732,10 +734,11 @@ document.addEventListener('DOMContentLoaded', function () {
         tabEl.id        = 'tab-' + probId;
         tabEl.setAttribute('onclick', "switchProblem('" + probId + "')");
         
+        // 🌟 [버그 원인 전면 수정] id 명칭을 probId가 아닌 진짜 문제 번호인 prob.id 기준으로 동결합니다.
         tabEl.innerHTML =
             '<span class="sidebar-num">'    + prob.id    + '</span>' +
             '<span class="sidebar-title">' + prob.title + '</span>' +
-            '<span class="solved-marker" id="solved-marker-' + probId + '" style="display:none; color:#3fb950; border:1px solid #3fb950; padding:1px 5px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-right:8px; vertical-align:middle; line-height:1;">성공</span>' +
+            '<span class="solved-marker" id="solved-marker-' + prob.id + '" style="display:none; color:#3fb950; border:1px solid #3fb950; padding:1px 5px; border-radius:4px; font-size:0.7rem; font-weight:bold; margin-right:8px; vertical-align:middle; line-height:1;">성공</span>' +
             (tc ? '<span class="tier-badge ' + tc + '">' + tl + '</span>' : '');
         sidebarList.appendChild(tabEl);
 

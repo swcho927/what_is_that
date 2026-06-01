@@ -7,13 +7,13 @@
     <script>window.PROBLEMS = window.PROBLEMS || {};</script>
     <style>
         .ranking-container {
-            max-width: 1150px; /* 표를 대폭 넓게 키웠습니다 */
-            margin: 110px auto 50px auto; /* 위쪽 여백을 110px 주어 상단바에 잘리는 문제를 완벽하게 해결하고 자동 정렬했습니다 */
+            max-width: 1150px;
+            margin: 110px auto 50px auto;
             padding: 0 30px;
             box-sizing: border-box;
         }
         .ranking-title {
-            font-size: 2.2rem; /* 제목 크기를 더 키웠습니다 */
+            font-size: 2.2rem;
             font-weight: 900;
             color: var(--text);
             margin-bottom: 25px;
@@ -29,10 +29,10 @@
             border-radius: 14px;
             overflow: hidden;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            font-size: 1.05rem; /* 표 내부 글씨를 더 크게 설정했습니다 */
+            font-size: 1.05rem;
         }
         .ranking-table th, .ranking-table td {
-            padding: 18px 24px; /* 행 패딩을 늘려 표가 훨씬 크고 시원해 보입니다 */
+            padding: 18px 24px;
             text-align: center;
             border-bottom: 1px solid var(--border);
         }
@@ -59,7 +59,16 @@
         
         .rank-nickname {
             font-weight: 700;
+        }
+        /* 🌟 닉네임 클릭 링크 및 호버 스타일 정의 */
+        .rank-nickname a {
             color: var(--text);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .rank-nickname a:hover {
+            color: var(--blue);
+            text-decoration: underline;
         }
         .rank-rating {
             font-weight: 800;
@@ -95,7 +104,7 @@
 </div>
 
 <div class="ranking-container">
-    <h1 class="ranking-title">랭킹</h1>
+    <h1 class="ranking-title">🏆 전적 랭킹</h1>
     
     <div id="ranking-loading">모든 유저의 레이팅 데이터를 계산하는 중...</div>
     
@@ -202,6 +211,7 @@
                 solvedProblems.forEach(id => allUniqueProblems.add(id));
                 
                 usersData.push({
+                    uid: doc.id, // 🌟 고유 유저 ID 동적 추출 및 할당
                     nickname: data.nickname || data.email || "익명",
                     solvedProblems: solvedProblems
                 });
@@ -222,6 +232,7 @@
                 if (tierIdx === -1) tierIdx = 0;
 
                 return {
+                    uid: u.uid, // 🌟 랭킹 맵 객체 구조에 바인딩
                     nickname: u.nickname,
                     rating: rating,
                     tierName: TIERS[tierIdx].name,
@@ -240,9 +251,10 @@
                 if (rank <= 3) rankClass = `rank-${rank}`;
 
                 const tr = document.createElement('tr');
+                // 🌟 닉네임 열에 쿼리스트링 파라미터를 갖는 전용 프로필 링크 태그 주입
                 tr.innerHTML = `
                     <td class="rank-number ${rankClass}">${rank}</td>
-                    <td class="rank-nickname">${user.nickname}</td>
+                    <td class="rank-nickname"><a href="profile.html?uid=${user.uid}">${user.nickname}</a></td>
                     <td class="tier-text" style="color: ${user.tierColor};">${user.tierName}</td>
                     <td class="rank-rating">${user.rating} 점</td>
                 `;

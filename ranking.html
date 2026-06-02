@@ -6,89 +6,63 @@
     <link rel="stylesheet" href="style.css">
     <script>window.PROBLEMS = window.PROBLEMS || {};</script>
     <style>
-        /* 64px 탑바 확장 및 스크롤 여백 최적화 패치 */
-        .topbar { 
-            height: 64px !important; 
-            padding: 0 24px !important; 
-            display: flex; 
-            align-items: center; 
-            background: #161b22;
-            border-bottom: 1px solid var(--border);
-        }
-        .topbar-btn-no-border { 
-            border: none !important; 
-            background: transparent !important; 
-            box-shadow: none !important; 
-            outline: none !important; 
-            cursor: pointer; 
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-        .topbar-btn-no-border:hover {
-            color: var(--blue);
-        }
-
-        /* 랭킹 컨테이너 대형화 및 가운데 정렬 패치 */
+        /* 원래 쓰던 검은색, 파란색 계열 변수들을 조합한 하이엔드 다크 테마 */
         .ranking-wrap { 
-            max-width: 1150px; 
-            margin: 110px auto 50px auto; 
-            padding: 0 30px; 
-            box-sizing: border-box;
+            max-width: 1100px; 
+            margin: 110px auto 40px; /* 글씨 잘림 방지를 위해 상단 여백을 110px로 최적화 */
+            padding: 0 20px; 
         }
         .ranking-title { 
-            font-size: 2.2rem; 
-            font-weight: 900; 
+            font-size: 2rem; 
+            font-weight: 800; 
             color: var(--text); 
-            margin-bottom: 25px; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px;
+            margin-bottom: 24px; 
         }
-
-        /* 딥 블랙 & 다크 블루 계열 하이엔드 테이블 레이아웃 */
         .ranking-table { 
             width: 100%; 
-            border-collapse: collapse; 
+            border-collapse: separate; 
+            border-spacing: 0; 
             background: var(--bg-card); 
             border: 1px solid var(--border); 
-            border-radius: 14px; 
+            border-radius: 12px; 
             overflow: hidden; 
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            font-size: 1.05rem;
-        }
-        .ranking-table th, .ranking-table td { 
-            padding: 18px 24px; 
-            border-bottom: 1px solid var(--border); 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
         .ranking-table th { 
-            background: rgba(255, 255, 255, 0.02); 
+            background: rgba(22, 27, 34, 0.6); 
             color: var(--text-muted); 
-            font-size: 0.95rem; 
+            font-size: 0.85rem; 
             font-weight: 800; 
-            text-transform: uppercase;
-            text-align: center;
+            text-transform: uppercase; 
+            letter-spacing: 0.06em; 
+            padding: 14px 18px; 
+            border-bottom: 1px solid var(--border); 
         }
-        .ranking-table tbody tr:last-child td { 
+        .ranking-table td { 
+            padding: 14px 18px; 
+            border-bottom: 1px solid var(--border); 
+            font-size: 0.95rem; 
+            vertical-align: middle;
+        }
+        .ranking-table tr:last-child td { 
             border-bottom: none; 
         }
-        .ranking-table tbody tr:hover td { 
-            background: rgba(88, 166, 255, 0.02); /* 부드러운 파란색 호버 라인 가속 */
+        /* 파란색 계열 호버 라인 효과 극대화 */
+        .ranking-table tr:hover td { 
+            background: rgba(88, 166, 255, 0.02); 
         }
-
-        /* 등수 필드 디자인 */
+        
         .rank-num { 
             font-weight: 900; 
-            font-size: 1.2rem; 
-            text-align: center;
+            text-align: center; 
+            width: 60px; 
         }
-        .rank-1 { color: #ffd700; font-size: 1.45rem; text-shadow: 0 0 10px rgba(255,215,0,0.2); }
-        .rank-2 { color: #c0c0c0; font-size: 1.35rem; }
-        .rank-3 { color: #cd7f32; font-size: 1.30rem; }
+        .rank-1 { color: #ffd700; font-size: 1.25rem; }
+        .rank-2 { color: #c0c0c0; font-size: 1.15rem; }
+        .rank-3 { color: #cd7f32; font-size: 1.10rem; }
         
-        /* 유저 정보 텍스트 필드 정렬 정의 */
-        .rank-nick {
-            text-align: left !important;
-            padding-left: 40px !important;
+        .rank-nick { 
+            text-align: left; 
         }
         .rank-nick a { 
             color: var(--text); 
@@ -101,38 +75,24 @@
             text-decoration: underline;
         }
         
+        /* 푼 문제 수 스타일 정의 */
         .rank-solved {
+            text-align: center;
             font-weight: 700;
             color: var(--text-muted);
-            text-align: center;
         }
+        /* 원래 쓰던 파란색(var(--blue)) 강조 적용 */
         .rank-rating { 
             font-weight: 800; 
             color: var(--blue); 
-            text-align: center;
+            text-align: right; 
         }
-        .rank-tier-cell {
-            text-align: center;
-        }
-
-        /* 티어 배지 컴팩트 캡슐화 */
-        .tier-capsule {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 800;
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid currentColor;
-            letter-spacing: -0.3px;
-        }
-
         #loading { 
             text-align: center; 
             color: var(--text-muted); 
-            font-weight: bold;
             padding: 60px; 
-            font-size: 1.2rem;
+            font-weight: bold;
+            font-size: 1.1rem;
         }
     </style>
 </head>
@@ -141,9 +101,7 @@
 <div class="topbar">
     <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
     <div class="topbar-divider"></div>
-    <span class="topbar-sub">실시간 전적</span>
-    <button class="topbar-btn topbar-btn-no-border" onclick="location.href='ranking.html'" style="margin-left: 10px;">랭킹</button>
-    
+    <span class="topbar-sub">랭킹</span>
     <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
         <span id="user-info" style="display:none; font-size:0.82rem; color:var(--text-muted);"></span>
         <button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>
@@ -153,16 +111,15 @@
 </div>
 
 <div class="ranking-wrap">
-    <div class="ranking-title">🏆 전적 랭킹</div>
-    <div id="loading">모든 계정의 실시간 데이터를 집계하는 중...</div>
-    
+    <div class="ranking-title">🏆 랭킹</div>
+    <div id="loading">랭킹 불러오는 중...</div>
     <table class="ranking-table" id="ranking-table" style="display:none;">
         <thead>
             <tr>
-                <th style="width: 12%;">등수</th>
-                <th style="width: 38%; text-align: left; padding-left: 40px;">닉네임</th>
-                <th style="width: 20%;">티어</th>
-                <th style="width: 15%;">푼 문제 수</th> <th style="width: 15%;">레이팅</th>
+                <th style="text-align: center; width: 12%;">등수</th>
+                <th style="text-align: left; width: 38%;">닉네임</th>
+                <th style="text-align: center; width: 20%;">티어</th>
+                <th style="text-align: center; width: 15%;">푼 문제 수</th> <th style="text-align: right; width: 15%;">레이팅</th>
             </tr>
         </thead>
         <tbody id="ranking-body"></tbody>
@@ -175,12 +132,9 @@
     import { getFirestore, collection, getDocs }    from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA", 
-        authDomain: "what-is-that-3cc48.firebaseapp.com",
-        projectId: "what-is-that-3cc48", 
-        storageBucket: "what-is-that-3cc48.firebasestorage.app",
-        messagingSenderId: "745704527046", 
-        appId: "1:745704527046:web:1ef97739fdc1348c96b3c7"
+        apiKey: "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA", authDomain: "what-is-that-3cc48.firebaseapp.com",
+        projectId: "what-is-that-3cc48", storageBucket: "what-is-that-3cc48.firebasestorage.app",
+        messagingSenderId: "745704527046", appId: "1:745704527046:web:1ef97739fdc1348c96b3c7"
     };
 
     const app  = initializeApp(firebaseConfig);
@@ -263,7 +217,7 @@
                     return sum + (p?.tier ? (REWARDS[`${p.tier.name} ${p.tier.level}`] || 0) : 0);
                 }, 0);
                 
-                // 🌟 객체 바인딩 구조에 해결한 문제 수 카운트 추가
+                // 🌟 원본 데이터 주입 구조 유지 및 solvedCount만 정밀 추가
                 users.push({ 
                     uid: d.id, 
                     nickname: data.nickname || data.email || "익명", 
@@ -282,11 +236,11 @@
                 const medal    = rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : rankNum === 3 ? '🥉' : rankNum;
                 
                 const tr = document.createElement('tr');
-                // 🌟 푼 문제 수(u.solvedCount) 열 레이아웃 동적 렌더링 주입
+                // 🌟 원본 tier-badge 컴포넌트 호출 규칙 완벽 보존 및 문제 수(rank-solved) 열 순서 주입
                 tr.innerHTML =
                     `<td class="rank-num ${rankClass}">${medal}</td>
                      <td class="rank-nick"><a href="profile.html?uid=${u.uid}">${u.nickname}</a></td>
-                     <td class="rank-tier-cell"><span class="tier-capsule" style="color:${tier.color};">${tier.name}</span></td>
+                     <td style="text-align: center;"><span class="tier-badge tier-${tier.name.split(' ')[0].toLowerCase()}" style="color:${tier.color};border-color:${tier.color};">${tier.name}</span></td>
                      <td class="rank-solved">${u.solvedCount}개</td>
                      <td class="rank-rating">${u.rating}점</td>`;
                 tbody.appendChild(tr);

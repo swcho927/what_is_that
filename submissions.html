@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제출 기록 - 그 뭐냐 Judge</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="navbar.js"></script>
+    <script>window.PROBLEMS = window.PROBLEMS || {};</script>
+    <style>
+        .sub-wrap { max-width: 1200px; margin: 80px auto 40px; padding: 0 20px; }
+        .sub-title { font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 20px; }
+        .sub-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
+        .sub-toggle button { padding: 8px 18px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-subtle); border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+        .sub-toggle button.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+        .sub-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .sub-table th { background: rgba(48,54,61,0.5); color: var(--text-subtle); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+        .sub-table th.sortable { cursor: pointer; user-select: none; }
+        .sub-table th.sortable:hover { color: var(--text); }
+        .sub-table th .arrow { opacity: 0.5; font-size: 0.7rem; }
+        .sub-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 0.86rem; white-space: nowrap; }
+        .sub-table tr:last-child td { border-bottom: none; }
+        .sub-table tbody tr { cursor: pointer; }
+        .sub-table tbody tr:hover td { background: rgba(88,166,255,0.06); }
+        .v-ac { color: #3fb950; font-weight: 700; }
+        .v-fail { color: #f85149; font-weight: 700; }
+        .sub-nick a { color: var(--text); text-decoration: none; font-weight: 600; }
+        .sub-nick a:hover { color: var(--blue); }
+        .mono { font-variant-numeric: tabular-nums; color: var(--text-subtle); }
+        #loading, #empty { text-align: center; color: var(--text-muted); padding: 40px; }
+
+        /* 코드 보기 모달 */
+        .code-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .code-overlay.show { display: flex; }
+        .code-modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 760px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
+        .code-modal-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        .code-modal-head .meta { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+        .code-modal-head .meta strong { color: var(--text); }
+        .code-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; line-height: 1; }
+        .code-close:hover { color: var(--text); }
+        .code-modal pre { margin: 0; padding: 18px 20px; overflow: auto; font-family: 'Consolas','Courier New',monospace; font-size: 0.88rem; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+<div id="topbar" class="topbar" data-subtitle="제출 기록" data-ranking data-submissions></div>
+
+<div class="sub-wrap">
+    <div class="sub-title">📜 제출 기록</div>
+    <div class="sub-toggle">
+        <button id="btn-all"  class="active">전체 기록</button>
+        <button id="btn-mine">내 기록</button>
+    </div>
+    <div id="loading">제출 기록 불러오는 중...</div>
+    <div id="empty" style="display:none;">제출 기록이 없습니다.</div>
+    <table class="sub-table" id="sub-table" style="display:none;">
+        <thead>
+            <tr>
+                <th>닉네임</th>
+                <th>문제</th>
+                <th>결과</th>
+                <th class="sortable" data-key="timeMs">사용 시간 <span class="arrow" data-arrow="timeMs"></span></th>
+                <th>사용 메모리</th>
+                <th class="sortable" data-key="codeLength">코드 길이 <span class="arrow" data-arrow="codeLength"></span></th>
+                <th class="sortable" data-key="submittedAt">제출 시간 <span class="arrow" data-arrow="submittedAt"></span></th>
+            </tr>
+        </thead>
+        <tbody id="sub-body"></tbody>
+    </table>
+</div>
+
+<div class="code-overlay" id="code-overlay">
+    <div class="code-modal">
+        <div class="code-modal-head">
+            <div>
+                <div style="font-weight:700;color:var(--text);" id="cm-title">제출 코드</div>
+                <div class="meta" id="cm-meta"></div>
+            </div>
+            <button class="code-close" id="cm-close">&times;</button>
+        </div>
+        <pre id="cm-code"></pre>
+    </div>
+</div>
+
+<script type="module">
+    import { app }                                                          from './firebase.js';
+    import { getAuth, onAuthStateChanged }                                  from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit }     from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    let allSubs   = [];     // 전체 제출
+    let myUid     = null;
+    let viewMine  = false;
+    let sortKey   = "submittedAt";
+    let sortDir   = "desc"; // "asc" | "desc"
+
+    const VERDICT_LABEL = { AC: "맞았습니다", WA: "틀렸습니다", TLE: "시간 초과", MLE: "메모리 초과", RE: "런타임 에러" };
+
+    function esc(s) { return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+    function fmtMem(bytes) {
+        if (!bytes) return "0 B";
+        return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    function fmtTime(ts) {
+        if (!ts || !ts.toDate) return "-";
+        const d = ts.toDate();
+        const p = n => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    }
+
+    function sortValue(s, key) {
+        if (key === "submittedAt") return s.submittedAt?.toMillis ? s.submittedAt.toMillis() : 0;
+        return s[key] ?? 0;
+    }
+
+    function render() {
+        const rows = (viewMine ? allSubs.filter(s => s.uid === myUid) : allSubs.slice());
+        rows.sort((a, b) => {
+            const va = sortValue(a, sortKey), vb = sortValue(b, sortKey);
+            return sortDir === "asc" ? va - vb : vb - va;
+        });
+
+        document.querySelectorAll('.arrow').forEach(el => el.textContent = "");
+        const arrow = document.querySelector(`.arrow[data-arrow="${sortKey}"]`);
+        if (arrow) arrow.textContent = sortDir === "asc" ? "▲" : "▼";
+
+        const tbody = document.getElementById('sub-body');
+        const table = document.getElementById('sub-table');
+        const empty = document.getElementById('empty');
+        tbody.innerHTML = "";
+
+        if (rows.length === 0) {
+            table.style.display = "none";
+            empty.style.display = "block";
+            return;
+        }
+        empty.style.display = "none";
+        table.style.display = "table";
+
+        rows.forEach((s, idx) => {
+            const cls   = s.success ? "v-ac" : "v-fail";
+            const label = VERDICT_LABEL[s.verdict] || s.verdict || "-";
+            const tr = document.createElement('tr');
+            tr.dataset.idx = idx;
+            tr.innerHTML =
+                `<td class="sub-nick"><a href="profile.html?uid=${esc(s.uid)}" onclick="event.stopPropagation();">${esc(s.nickname)}</a></td>
+                 <td>${esc(s.problemId)} <span style="color:var(--text-muted);">${esc(s.problemTitle)}</span></td>
+                 <td class="${cls}">${esc(label)}</td>
+                 <td class="mono">${s.timeMs} ms</td>
+                 <td class="mono">${fmtMem(s.memBytes)}</td>
+                 <td class="mono">${s.codeLength}</td>
+                 <td class="mono">${fmtTime(s.submittedAt)}</td>`;
+            tr.addEventListener('click', () => openCode(s));
+            tbody.appendChild(tr);
+        });
+    }
+
+    function openCode(s) {
+        const label = VERDICT_LABEL[s.verdict] || s.verdict || "-";
+        document.getElementById('cm-title').textContent = `${s.problemId} ${s.problemTitle}`;
+        document.getElementById('cm-meta').innerHTML =
+            `<strong>${esc(s.nickname)}</strong> · <span class="${s.success ? 'v-ac' : 'v-fail'}">${esc(label)}</span> · ` +
+            `${s.timeMs} ms · ${fmtMem(s.memBytes)} · ${s.codeLength}자 · ${fmtTime(s.submittedAt)}`;
+        document.getElementById('cm-code').textContent = s.code || "(코드 없음)";
+        document.getElementById('code-overlay').classList.add('show');
+    }
+    function closeCode() { document.getElementById('code-overlay').classList.remove('show'); }
+
+    // 정렬 헤더
+    document.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const key = th.dataset.key;
+            if (sortKey === key) sortDir = (sortDir === "asc" ? "desc" : "asc");
+            else { sortKey = key; sortDir = (key === "submittedAt" ? "desc" : "asc"); }
+            render();
+        });
+    });
+
+    // 전체 / 내 기록 토글
+    document.getElementById('btn-all').addEventListener('click', () => {
+        viewMine = false;
+        document.getElementById('btn-all').classList.add('active');
+        document.getElementById('btn-mine').classList.remove('active');
+        render();
+    });
+    document.getElementById('btn-mine').addEventListener('click', () => {
+        if (!myUid) { alert("내 기록을 보려면 로그인이 필요합니다."); return; }
+        viewMine = true;
+        document.getElementById('btn-mine').classList.add('active');
+        document.getElementById('btn-all').classList.remove('active');
+        render();
+    });
+
+    // 모달 닫기
+    document.getElementById('cm-close').addEventListener('click', closeCode);
+    document.getElementById('code-overlay').addEventListener('click', e => {
+        if (e.target.id === 'code-overlay') closeCode();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCode(); });
+
+    onAuthStateChanged(auth, user => { myUid = user ? user.uid : null; });
+
+    async function load() {
+        try {
+            const q    = query(collection(db, "submissions"), orderBy("submittedAt", "desc"), limit(500));
+            const snap = await getDocs(q);
+            allSubs = [];
+            snap.forEach(d => allSubs.push(d.data()));
+            document.getElementById('loading').style.display = "none";
+            render();
+        } catch(e) {
+            console.error(e);
+            document.getElementById('loading').textContent = "제출 기록 로드 실패: " + e.message;
+        }
+    }
+
+    load();
+</script>
+
+</body>
+</html>

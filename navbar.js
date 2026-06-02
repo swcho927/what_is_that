@@ -5,14 +5,16 @@ const auth = getAuth(app);
 const el   = document.getElementById('topbar');
 if (el) {
     const subtitle = el.dataset.subtitle ?? '그 뭐냐 언어 온라인 채점 사이트';
-    const hasRanking = 'ranking' in el.dataset;
-    const noAuth     = 'noAuth'  in el.dataset;
+    const hasRanking     = 'ranking'     in el.dataset;
+    const hasSubmissions = 'submissions' in el.dataset;
+    const noAuth         = 'noAuth'      in el.dataset;
 
     el.innerHTML =
         `<span class="topbar-brand" onclick="location.href='index.html'">그 뭐냐 <span>Judge</span></span>` +
         `<div class="topbar-divider"></div>` +
         `<span class="topbar-sub">${subtitle}</span>` +
         (hasRanking ? `<button class="topbar-btn" onclick="location.href='ranking.html'" style="margin-left:10px;border:none;">랭킹</button>` : '') +
+        (hasSubmissions ? `<button class="topbar-btn" onclick="location.href='submissions.html'" style="margin-left:6px;border:none;">제출 기록</button>` : '') +
         (!noAuth
             ? `<div class="topbar-auth">` +
                 `<span id="user-info" class="topbar-user" style="display:none;"></span>` +

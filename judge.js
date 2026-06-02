@@ -1,6 +1,6 @@
 import { app }            from './firebase.js';
 import { getAuth, onAuthStateChanged }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion }    from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
 const auth = getAuth(app);
 const db   = getFirestore(app);
@@ -30,6 +30,32 @@ async function awardRating(prob) {
         const el = document.getElementById(`solved-marker-${prob.id}`);
         if (el) el.style.display = 'inline-block';
     } catch(e) { console.error("풀이 기록 실패:", e); }
+}
+
+// ── 제출 기록 저장 ──
+async function recordSubmission(prob, code, verdict, timeMs, memBytes) {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        let nickname = user.displayName || user.email || "익명";
+        try {
+            const snap = await getDoc(doc(db, "users", user.uid));
+            if (snap.exists() && snap.data().nickname) nickname = snap.data().nickname;
+        } catch(_) {}
+        await addDoc(collection(db, "submissions"), {
+            uid:          user.uid,
+            nickname:     nickname,
+            problemId:    String(prob.id),
+            problemTitle: prob.title || "",
+            verdict:      verdict,                 // "AC" | "WA" | "TLE" | "MLE" | "RE"
+            success:      verdict === "AC",
+            timeMs:       Math.round(timeMs),
+            memBytes:     Math.round(memBytes),
+            codeLength:   code.length,
+            code:         code,
+            submittedAt:  serverTimestamp()
+        });
+    } catch(e) { console.error("제출 기록 저장 실패:", e); }
 }
 
 
@@ -141,11 +167,14 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
     let out = "", inputTokens = input.trim().split(/[\n\s]+/).filter(Boolean), inputIndex = 0;
     const compiled = precompile(code), len = compiled.length;
     const memLimit = memLimitMB * 1024 * 1024, startTime = Date.now();
+    let peakMem = 0;
 
     try {
         while (pc >= 0 && pc < len) {
-            if (Date.now() - startTime > timeLimitMs) return { output: out.trim(), verdict: "TLE" };
-            if (memory.size * 8 > memLimit)           return { output: out.trim(), verdict: "MLE" };
+            if (memory.size > peakMem) peakMem = memory.size;
+            const elapsed = Date.now() - startTime;
+            if (elapsed > timeLimitMs)      return { output: out.trim(), verdict: "TLE", time: elapsed, mem: peakMem * 8 };
+            if (memory.size * 8 > memLimit) return { output: out.trim(), verdict: "MLE", time: elapsed, mem: memory.size * 8 };
 
             const line = compiled[pc];
             let jumped = false;
@@ -161,10 +190,9 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
             }
             if (!jumped) pc++;
         }
-        console.log(`실행 시간: ${Date.now() - startTime}ms`);
-        return { output: out.trim(), verdict: "AC" };
+        return { output: out.trim(), verdict: "AC", time: Date.now() - startTime, mem: peakMem * 8 };
     } catch(err) {
-        return { output: out.trim(), verdict: "RE: " + err.message };
+        return { output: out.trim(), verdict: "RE: " + err.message, time: Date.now() - startTime, mem: peakMem * 8 };
     }
 }
 
@@ -317,28 +345,36 @@ async function submitCode(probId) {
     const els = getEls(probId);
     initUI(els, tcs.length, "채점 중...");
 
+    let peakTime = 0, peakMem = 0;
     for (let i = 0; i < tcs.length; i++) {
         const result = runCode(code, tcs[i].in, (prob.timeLimit || 2) * 1000, prob.memoryLimit || 256);
         updateProgress(els, i, tcs.length);
+        if (result.time > peakTime) peakTime = result.time;
+        if (result.mem  > peakMem)  peakMem  = result.mem;
 
-        let failMsg = "";
-        if      (result.verdict === "TLE")        failMsg = `[테스트 ${i+1}] 시간 초과`;
-        else if (result.verdict === "MLE")        failMsg = `[테스트 ${i+1}] 메모리 초과`;
-        else if (result.verdict.startsWith("RE")) failMsg = `[테스트 ${i+1}] 런타임 에러\n${result.verdict.slice(4)}`;
+        let failMsg = "", verdict = "";
+        if      (result.verdict === "TLE")        { failMsg = `[테스트 ${i+1}] 시간 초과`;        verdict = "TLE"; }
+        else if (result.verdict === "MLE")        { failMsg = `[테스트 ${i+1}] 메모리 초과`;      verdict = "MLE"; }
+        else if (result.verdict.startsWith("RE")) { failMsg = `[테스트 ${i+1}] 런타임 에러\n${result.verdict.slice(4)}`; verdict = "RE"; }
         else {
             const ok = prob.specialJudge
                 ? prob.specialJudge(result.output.trim(), String(tcs[i].out).trim())
                 : result.output.trim() === String(tcs[i].out).trim();
-            if (!ok) failMsg = `[테스트 ${i+1}] 틀렸습니다\n입력:    ${tcs[i].in.replace(/\n/g," / ")}\n정답:    ${tcs[i].out}\n내 출력: ${result.output}`;
+            if (!ok) { failMsg = `[테스트 ${i+1}] 틀렸습니다\n입력:    ${tcs[i].in.replace(/\n/g," / ")}\n정답:    ${tcs[i].out}\n내 출력: ${result.output}`; verdict = "WA"; }
         }
 
         await new Promise(r => setTimeout(r, 30));
-        if (failMsg) { showFail(els, failMsg); resetBtn(els); return; }
+        if (failMsg) {
+            showFail(els, failMsg); resetBtn(els);
+            recordSubmission(prob, code, verdict, peakTime, peakMem);
+            return;
+        }
     }
 
     showSuccess(els, "맞았습니다!! 🎉");
     await awardRating(prob);
     resetBtn(els);
+    recordSubmission(prob, code, "AC", peakTime, peakMem);
 }
 
 

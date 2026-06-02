@@ -1,0 +1,28 @@
+// ⚠️ 이 파일은 참고용입니다. 실제 적용은 Firebase 콘솔 → Firestore Database → 규칙 에 붙여넣어야 합니다.
+// (프로젝트: what-is-that-3cc48)
+//
+// 기존 users 규칙을 유지하면서 submissions 규칙을 추가한 형태입니다.
+// 콘솔의 기존 규칙과 비교해 users 부분이 다르면 기존 것을 우선하고 submissions 블록만 추가하세요.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 유저 프로필 (랭킹/풀이 기록)
+    match /users/{uid} {
+      allow read: if true;                                   // 랭킹·프로필 공개 조회
+      allow create, update: if request.auth != null
+                            && request.auth.uid == uid;      // 본인만 작성/수정
+      allow delete: if false;
+    }
+
+    // 제출 기록
+    match /submissions/{subId} {
+      allow read: if true;                                   // 모든 사람의 제출 기록 공개 조회
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.uid
+                    && request.resource.data.code.size() <= 20000;  // 코드 길이 제한(악용 방지)
+      allow update, delete: if false;                        // 제출 기록은 변경 불가
+    }
+  }
+}

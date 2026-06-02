@@ -1,8 +1,8 @@
 # 그 뭐냐 Judge
 
-친구가 설계한 "그 뭐냐" 언어 전용 온라인 채점 사이트. GitHub Pages 정적 호스팅 + Firebase.
+"그 뭐냐" 언어 전용 온라인 채점 사이트. GitHub Pages 정적 호스팅 + Firebase.
 
-- 배포: https://swcho927.github.io/baekjoon/ (main 브랜치 루트 자동 배포)
+- 배포: https://swcho927.github.io/what_is_that/ (main 브랜치 루트 자동 배포)
 - Firebase 프로젝트: `what-is-that-3cc48`
 - 상세 인수인계 문서: [docs/handoff.md](docs/handoff.md) — 티어 점수표, 로드맵, Firebase 구조 등은 여기 참고
 
@@ -12,10 +12,13 @@
 index.html      메인 홈
 judge.html      채점 페이지 (메인 기능) — 새 문제 <script> 등록 위치
 ranking.html    전체 랭킹
+submissions.html 제출 기록 (전체/내 기록 토글, 정렬, 코드 보기 모달)
 profile.html    유저 프로필
 login/signup.html
+navbar.js       상단바 공통 컴포넌트 (data-ranking / data-submissions 로 버튼 노출)
 style.css       공통 스타일
 judge.js        인터프리터 + 채점 엔진
+firestore.rules Firestore 보안 규칙(참고용 — 실제 적용은 콘솔)
 problems/번호.js  문제별 solver + 테스트케이스
 ```
 

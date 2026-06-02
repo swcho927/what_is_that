@@ -112,9 +112,24 @@ users/{uid}/
     email: "..."
     joinedAt: timestamp
     solvedProblems: ["1000", "1001", ...]   // 맞은 문제 ID 배열
+
+submissions/{autoId}/                       // 제출 기록 (judge.js recordSubmission)
+    uid, nickname
+    problemId, problemTitle
+    verdict: "AC"|"WA"|"TLE"|"MLE"|"RE"
+    success: boolean
+    timeMs: number          // 테스트케이스 중 최대 실행 시간(ms)
+    memBytes: number        // 최대 메모리(byte, memory.size*8)
+    codeLength: number
+    code: string            // 제출 코드 원문 (기록 클릭 시 표시)
+    submittedAt: serverTimestamp
 ```
 
 레이팅 = solvedProblems 각 문제 티어 점수 합산.
+
+제출 기록은 채점 성공/실패 모두 저장됨. `submissions.html`에서 전체/내 기록 토글 + 사용시간/코드길이/제출시간 정렬 + 행 클릭 시 코드 모달.
+
+> **Firestore 규칙 필수**: `submissions` 컬렉션 read/create 규칙을 콘솔에 추가해야 동작함. 저장소 루트 `firestore.rules` 참고해서 Firebase 콘솔 → Firestore → 규칙에 붙여넣을 것.
 
 ## 7. 티어 시스템
 

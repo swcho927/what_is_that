@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>제출 기록 - 그 뭐냐 Judge</title>
+    <title>제출 현황 - 그 뭐냐 Judge</title>
     <link rel="stylesheet" href="style.css">
     <script type="module" src="navbar.js"></script>
     <script>window.PROBLEMS = window.PROBLEMS || {};</script>
@@ -27,6 +27,11 @@
         .v-fail { color: #f85149; font-weight: 700; }
         .sub-nick a { color: var(--text); text-decoration: none; font-weight: 600; }
         .sub-nick a:hover { color: var(--blue); }
+        .sub-link { color: var(--text); text-decoration: none; }
+        .sub-link:hover { color: var(--blue); }
+        .sub-link:hover span { color: var(--blue) !important; }
+        .cm-link { color: inherit; text-decoration: none; }
+        .cm-link:hover { color: var(--blue); text-decoration: underline; }
         .mono { font-variant-numeric: tabular-nums; color: var(--text-subtle); }
         #loading, #empty { text-align: center; color: var(--text-muted); padding: 40px; }
 
@@ -46,18 +51,18 @@
 </head>
 <body>
 
-<div id="topbar" class="topbar" data-subtitle="제출 기록" data-ranking data-submissions></div>
+<div id="topbar" class="topbar" data-subtitle="제출 현황" data-ranking data-submissions></div>
 
 <div class="sub-wrap">
-    <div class="sub-title" id="sub-title">📜 제출 기록</div>
+    <div class="sub-title" id="sub-title">제출 현황</div>
     <div class="sub-controls">
         <div class="sub-toggle">
             <button id="btn-all"  class="active">전체 기록</button>
             <button id="btn-mine">내 기록</button>
         </div>
     </div>
-    <div id="loading">제출 기록 불러오는 중...</div>
-    <div id="empty" style="display:none;">제출 기록이 없습니다.</div>
+    <div id="loading">제출 현황 불러오는 중...</div>
+    <div id="empty" style="display:none;">제출 현황이 없습니다.</div>
     <table class="sub-table" id="sub-table" style="display:none;">
         <thead>
             <tr>
@@ -82,7 +87,7 @@
                 <div class="meta" id="cm-meta"></div>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
-                <button class="code-copy" id="cm-copy">📋 복사</button>
+                <button class="code-copy" id="cm-copy">복사</button>
                 <button class="code-close" id="cm-close">&times;</button>
             </div>
         </div>
@@ -158,7 +163,7 @@
             tr.dataset.idx = idx;
             tr.innerHTML =
                 `<td class="sub-nick"><a href="profile.html?uid=${esc(s.uid)}" onclick="event.stopPropagation();">${esc(s.nickname)}</a></td>
-                 <td>${esc(s.problemId)} <span style="color:var(--text-muted);">${esc(s.problemTitle)}</span></td>
+                 <td><a class="sub-link" href="judge.html?prob=${esc(s.problemId)}" onclick="event.stopPropagation();">${esc(s.problemId)} <span style="color:var(--text-muted);">${esc(s.problemTitle)}</span></a></td>
                  <td class="${cls}">${esc(label)}</td>
                  <td class="mono">${s.timeMs} ms</td>
                  <td class="mono">${fmtMem(s.memBytes)}</td>
@@ -174,16 +179,17 @@
         selectedProb = new URLSearchParams(location.search).get('problem') || "";
         if (selectedProb) {
             const title = allSubs.find(s => s.problemId === selectedProb)?.problemTitle || "";
-            document.getElementById('sub-title').textContent = `📜 ${selectedProb} ${title} 제출 기록`;
-            document.title = `${selectedProb} 제출 기록 - 그 뭐냐 Judge`;
+            document.getElementById('sub-title').textContent = `${selectedProb} ${title} 제출 현황`;
+            document.title = `${selectedProb} 제출 현황 - 그 뭐냐 Judge`;
         }
     }
 
     function openCode(s) {
         const label = VERDICT_LABEL[s.verdict] || s.verdict || "-";
-        document.getElementById('cm-title').textContent = `${s.problemId} ${s.problemTitle}`;
+        document.getElementById('cm-title').innerHTML =
+            `<a class="cm-link" href="judge.html?prob=${esc(s.problemId)}">${esc(s.problemId)} ${esc(s.problemTitle)}</a>`;
         document.getElementById('cm-meta').innerHTML =
-            `<strong>${esc(s.nickname)}</strong> · <span class="${s.success ? 'v-ac' : 'v-fail'}">${esc(label)}</span> · ` +
+            `<strong><a class="cm-link" href="profile.html?uid=${esc(s.uid)}">${esc(s.nickname)}</a></strong> · <span class="${s.success ? 'v-ac' : 'v-fail'}">${esc(label)}</span> · ` +
             `${s.timeMs} ms · ${fmtMem(s.memBytes)} · ${s.codeLength} B · ${fmtTime(s.submittedAt)}`;
         document.getElementById('cm-code').textContent = s.code || "(코드 없음)";
         document.getElementById('code-overlay').classList.add('show');
@@ -203,8 +209,8 @@
             try { document.execCommand('copy'); } catch(__) {}
             document.body.removeChild(ta);
         }
-        btn.textContent = "✅ 복사됨";
-        setTimeout(() => { btn.textContent = "📋 복사"; }, 1000);
+        btn.textContent = "복사됨";
+        setTimeout(() => { btn.textContent = "복사"; }, 1000);
     }
 
     // 정렬 헤더
@@ -257,7 +263,7 @@
             render();
         } catch(e) {
             console.error(e);
-            document.getElementById('loading').textContent = "제출 기록 로드 실패: " + e.message;
+            document.getElementById('loading').textContent = "제출 현황 로드 실패: " + e.message;
         }
     }
 

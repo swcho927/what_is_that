@@ -12,7 +12,7 @@
 index.html      메인 홈
 judge.html      채점 페이지 (메인 기능) — 새 문제 <script> 등록 위치
 ranking.html    전체 랭킹
-submissions.html 제출 기록 (전체/내 기록 토글, 정렬, 코드 보기 모달)
+submissions.html 제출 현황 (전체/내 기록 토글, 정렬, 코드 보기 모달, 문제·프로필 링크)
 profile.html    유저 프로필
 login/signup.html
 navbar.js       상단바 공통 컴포넌트 (data-ranking / data-submissions 로 버튼 노출)
@@ -66,21 +66,8 @@ problems/번호.js  문제별 solver + 테스트케이스
 })();
 ```
 
-## 현재 문제 목록
 
-| 파일 | 제목 | 티어 |
-|---|---|---|
-| 0523 | 십자인대 | Gold V |
-| 1000 | A+B | Bronze V |
-| 1001 | A−B | Bronze V |
-| 1002 | A×B | Bronze V |
-| 1003 | A÷B | Silver IV |
-| 1006 | 피보나치 수 | Silver V |
-| 1991 | Stalin Sort | Bronze II |
-| 2000 | 정렬 | Silver I |
-| 3000 | 정렬 | Platinum V |
-| 9000 | 한로로와 싸이 | Silver IV |
-| 9001 | 파도의 만가 | Gold II |
+
 
 ## 주의사항
 

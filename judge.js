@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <textarea id="editor-${probId}" class="code-editor" placeholder="여기에 그 뭐냐 코드를 작성하세요..." spellcheck="false">${prob.defaultCode || ''}</textarea>
                     <button id="sBtn-${probId}" class="btn-submit" onclick="submitCode('${probId}')">제출 및 채점 시작</button>
-                    <a href="submissions.html?problem=${probId}" class="btn-records">📜 제출 기록</a>
+                    <a href="submissions.html?problem=${probId}" class="btn-records">제출 현황</a>
                     <div class="judge-area">
                         <div class="progress-wrap" id="progressWrap-${probId}">
                             <div class="progress-info">

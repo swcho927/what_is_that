@@ -41,10 +41,16 @@ body {
     font-size: 1.1rem;
     color: var(--blue);
     letter-spacing: 0.5px;
+    cursor: pointer;
 }
 .topbar-brand span { color: var(--text); }
 .topbar-divider { width: 1px; height: 18px; background: var(--border); }
 .topbar-sub { font-size: 0.8rem; color: var(--text-subtle); }
+
+/* 상단바 우측 인증 영역 */
+.topbar-auth { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.topbar-user { font-size: 0.82rem; color: var(--text-muted); }
+.topbar-user a { color: var(--blue); text-decoration: none; font-weight: bold; }
 
 /* ── 전체 레이아웃 ── */
 .layout {

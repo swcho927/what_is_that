@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>그 뭐냐 Judge</title>
     <link rel="stylesheet" href="style.css">
     <script type="module">
@@ -26,23 +27,19 @@
             const btnLogin  = document.getElementById('btn-login');
             const btnSignup = document.getElementById('btn-signup');
             const btnLogout = document.getElementById('btn-logout');
+            const loggedIn  = !!user;
 
-            if (user) {
+            if (loggedIn) {
                 const displayName = user.displayName || user.email || "유저";
-                userInfo.innerHTML = `<a href="profile.html" style="color: var(--blue); text-decoration: none; font-weight: bold; cursor: pointer;">${displayName}</a>`;
-                userInfo.style.display = 'inline-block';
-                
-                if (btnLogin)  btnLogin.style.display = 'none';
-                if (btnSignup) btnSignup.style.display = 'none';
-                if (btnLogout) btnLogout.style.display = 'inline-block';
+                userInfo.innerHTML = `<a href="profile.html">${displayName}</a>`;
             } else {
-                userInfo.style.display = 'none';
                 userInfo.innerHTML = '';
-                
-                if (btnLogin)  btnLogin.style.display = 'inline-block';
-                if (btnSignup) btnSignup.style.display = 'inline-block';
-                if (btnLogout) btnLogout.style.display = 'none';
             }
+
+            userInfo.style.display  = loggedIn ? 'inline-block' : 'none';
+            btnLogin.style.display  = loggedIn ? 'none' : 'inline-block';
+            btnSignup.style.display = loggedIn ? 'none' : 'inline-block';
+            btnLogout.style.display = loggedIn ? 'inline-block' : 'none';
         });
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -55,13 +52,13 @@
 <body>
 
 <div class="topbar">
-    <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
+    <span class="topbar-brand" onclick="location.href='index.html'">그 뭐냐 <span>Judge</span></span>
     <div class="topbar-divider"></div>
     <span class="topbar-sub">그 뭐냐 언어 온라인 채점 사이트</span>
-    <button class="topbar-btn" onclick="location.href='ranking.html'" style="margin-left: 10px;">랭킹</button>
-    
-    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
-        <span id="user-info" style="display:none; font-size:0.82rem; color:var(--text-muted);"></span>
+    <button class="topbar-btn" onclick="location.href='ranking.html'">랭킹</button>
+
+    <div class="topbar-auth">
+        <span id="user-info" class="topbar-user" style="display:none;"></span>
         <button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>
         <button id="btn-signup" class="topbar-btn topbar-btn-primary" onclick="location.href='signup.html'">회원가입</button>
         <button id="btn-logout" class="topbar-btn" style="display:none;">로그아웃</button>

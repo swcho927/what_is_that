@@ -51,7 +51,7 @@ async function recordSubmission(prob, code, verdict, timeMs, memBytes) {
             success:      verdict === "AC",
             timeMs:       Math.round(timeMs),
             memBytes:     Math.round(memBytes),
-            codeLength:   code.length,
+            codeLength:   new TextEncoder().encode(code).length,   // UTF-8 바이트 수
             code:         code,
             submittedAt:  serverTimestamp()
         });
@@ -555,6 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <textarea id="editor-${probId}" class="code-editor" placeholder="여기에 그 뭐냐 코드를 작성하세요..." spellcheck="false">${prob.defaultCode || ''}</textarea>
                     <button id="sBtn-${probId}" class="btn-submit" onclick="submitCode('${probId}')">제출 및 채점 시작</button>
+                    <a href="submissions.html?problem=${probId}" class="btn-records">📜 이 문제 제출 기록 보기</a>
                     <div class="judge-area">
                         <div class="progress-wrap" id="progressWrap-${probId}">
                             <div class="progress-info">

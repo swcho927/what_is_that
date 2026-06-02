@@ -10,7 +10,9 @@
     <style>
         .sub-wrap { max-width: 1200px; margin: 80px auto 40px; padding: 0 20px; }
         .sub-title { font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 20px; }
-        .sub-toggle { display: flex; gap: 8px; margin-bottom: 18px; }
+        .sub-controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 18px; }
+        .sub-prob-select { padding: 8px 14px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; min-width: 200px; }
+        .sub-toggle { display: flex; gap: 8px; }
         .sub-toggle button { padding: 8px 18px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-subtle); border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
         .sub-toggle button.active { background: var(--blue); color: #fff; border-color: var(--blue); }
         .sub-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
@@ -47,9 +49,12 @@
 
 <div class="sub-wrap">
     <div class="sub-title">📜 제출 기록</div>
-    <div class="sub-toggle">
-        <button id="btn-all"  class="active">전체 기록</button>
-        <button id="btn-mine">내 기록</button>
+    <div class="sub-controls">
+        <select id="prob-select" class="sub-prob-select"></select>
+        <div class="sub-toggle">
+            <button id="btn-all"  class="active">전체 기록</button>
+            <button id="btn-mine">내 기록</button>
+        </div>
     </div>
     <div id="loading">제출 기록 불러오는 중...</div>
     <div id="empty" style="display:none;">제출 기록이 없습니다.</div>
@@ -90,11 +95,12 @@
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
-    let allSubs   = [];     // 전체 제출
-    let myUid     = null;
-    let viewMine  = false;
-    let sortKey   = "submittedAt";
-    let sortDir   = "desc"; // "asc" | "desc"
+    let allSubs      = [];     // 전체 제출
+    let myUid        = null;
+    let viewMine     = false;
+    let selectedProb = "";     // 현재 선택된 문제 ID ("" = 전체 문제)
+    let sortKey      = "submittedAt";
+    let sortDir      = "desc";  // "asc" | "desc"
 
     const VERDICT_LABEL = { AC: "맞았습니다", WA: "틀렸습니다", TLE: "시간 초과", MLE: "메모리 초과", RE: "런타임 에러" };
 
@@ -118,7 +124,8 @@
     }
 
     function render() {
-        const rows = (viewMine ? allSubs.filter(s => s.uid === myUid) : allSubs.slice());
+        let rows = selectedProb ? allSubs.filter(s => s.problemId === selectedProb) : allSubs.slice();
+        if (viewMine) rows = rows.filter(s => s.uid === myUid);
         rows.sort((a, b) => {
             const va = sortValue(a, sortKey), vb = sortValue(b, sortKey);
             return sortDir === "asc" ? va - vb : vb - va;
@@ -152,11 +159,26 @@
                  <td class="${cls}">${esc(label)}</td>
                  <td class="mono">${s.timeMs} ms</td>
                  <td class="mono">${fmtMem(s.memBytes)}</td>
-                 <td class="mono">${s.codeLength}</td>
+                 <td class="mono">${s.codeLength} B</td>
                  <td class="mono">${fmtTime(s.submittedAt)}</td>`;
             tr.addEventListener('click', () => openCode(s));
             tbody.appendChild(tr);
         });
+    }
+
+    function populateProblems() {
+        const titles = new Map();
+        allSubs.forEach(s => { if (!titles.has(s.problemId)) titles.set(s.problemId, s.problemTitle || ""); });
+        const ids = [...titles.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+        const sel = document.getElementById('prob-select');
+        sel.innerHTML = `<option value="">전체 문제</option>` +
+            ids.map(id => `<option value="${esc(id)}">${esc(id)} ${esc(titles.get(id))}</option>`).join('');
+
+        // ?problem=ID 가 있으면 그 문제 선택, 없으면 전체 문제
+        const param = new URLSearchParams(location.search).get('problem');
+        selectedProb = (param && ids.includes(param)) ? param : "";
+        sel.value = selectedProb;
     }
 
     function openCode(s) {
@@ -164,7 +186,7 @@
         document.getElementById('cm-title').textContent = `${s.problemId} ${s.problemTitle}`;
         document.getElementById('cm-meta').innerHTML =
             `<strong>${esc(s.nickname)}</strong> · <span class="${s.success ? 'v-ac' : 'v-fail'}">${esc(label)}</span> · ` +
-            `${s.timeMs} ms · ${fmtMem(s.memBytes)} · ${s.codeLength}자 · ${fmtTime(s.submittedAt)}`;
+            `${s.timeMs} ms · ${fmtMem(s.memBytes)} · ${s.codeLength} B · ${fmtTime(s.submittedAt)}`;
         document.getElementById('cm-code').textContent = s.code || "(코드 없음)";
         document.getElementById('code-overlay').classList.add('show');
     }
@@ -178,6 +200,12 @@
             else { sortKey = key; sortDir = (key === "submittedAt" ? "desc" : "asc"); }
             render();
         });
+    });
+
+    // 문제 선택
+    document.getElementById('prob-select').addEventListener('change', e => {
+        selectedProb = e.target.value;
+        render();
     });
 
     // 전체 / 내 기록 토글
@@ -209,8 +237,13 @@
             const q    = query(collection(db, "submissions"), orderBy("submittedAt", "desc"), limit(500));
             const snap = await getDocs(q);
             allSubs = [];
-            snap.forEach(d => allSubs.push(d.data()));
+            snap.forEach(d => {
+                const x = d.data();
+                x.codeLength = new TextEncoder().encode(x.code || "").length;  // UTF-8 바이트(과거 기록도 일관 표시)
+                allSubs.push(x);
+            });
             document.getElementById('loading').style.display = "none";
+            populateProblems();
             render();
         } catch(e) {
             console.error(e);

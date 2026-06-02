@@ -300,6 +300,16 @@ body {
 }
 .btn-submit:active { transform: translateY(0); }
 
+.btn-records {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-subtle);
+    text-decoration: none;
+}
+.btn-records:hover { color: var(--blue); }
+
 /* ── 채점 진행 영역 ── */
 .judge-area { margin-top: 16px; }
 

@@ -1,35 +1,13 @@
-// ════════════════════════════════════════════════════════
-//  judge.js  ─  그뭐냐 채점 엔진
-// ════════════════════════════════════════════════════════
-import { initializeApp }      from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import { app }            from './firebase.js';
+import { getAuth, onAuthStateChanged }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion }    from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-const firebaseConfig = {
-    apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
-    authDomain:        "what-is-that-3cc48.firebaseapp.com",
-    projectId:         "what-is-that-3cc48",
-    storageBucket:     "what-is-that-3cc48.firebasestorage.app",
-    messagingSenderId: "745704527046",
-    appId:             "1:745704527046:web:1ef97739fdc1348c96b3c7",
-    measurementId:     "G-YKN1NFTZRM"
-};
-
-const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-// ── Firebase: 로그인 상태 감지 ──
+// ── 로그인 상태: 사이드바 풀이 마커 갱신 ──
 onAuthStateChanged(auth, async (user) => {
-    const userInfo = document.getElementById('user-info');
-    if (!user) { if (userInfo) userInfo.style.display = 'none'; return; }
-
-    if (userInfo) {
-        const name = user.displayName || "유저";
-        userInfo.innerHTML = `<a href="profile.html" style="color:var(--blue);text-decoration:none;font-weight:bold;">${name}</a>`;
-        userInfo.style.display = 'inline-block';
-    }
-
+    if (!user) return;
     try {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (!snap.exists()) return;
@@ -40,7 +18,7 @@ onAuthStateChanged(auth, async (user) => {
     } catch(e) { console.error("풀이 목록 로드 실패:", e); }
 });
 
-// ── Firebase: 문제 풀이 기록 ──
+// ── 풀이 기록 ──
 async function awardRating(prob) {
     const user = auth.currentUser;
     if (!user) return;
@@ -119,7 +97,7 @@ function getValFromTokens(toks) {
         let node = parseAtom();
         while (peek()?.type === 'op' && ['.','..','...'].includes(peek().val)) {
             const op = consume().val, right = parseAtom();
-            if (op === '.')        node *= right;
+            if (op === '.')       node *= right;
             else if (op === '..') node = Math.floor(node / right);
             else                  node %= right;
         }
@@ -174,22 +152,12 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
 
             if (line) {
                 const { cmdVal, leftToks, rightToks } = line;
-                if (cmdVal === '뭐더라') {
-                    memory.set(resolveAddrFromTokens(leftToks), getValFromTokens(rightToks));
-                } else if (cmdVal === '진짜뭐지') {
-                    const addr = resolveAddrFromTokens(leftToks);
-                    const val  = inputTokens[inputIndex++] ?? "";
-                    memory.set(addr, val.length > 0 ? val.charCodeAt(0) : 0);
-                } else if (cmdVal === '진짜뭐냐') {
-                    out += String.fromCharCode(getValFromTokens(leftToks));
-                } else if (cmdVal === '뭐지') {
-                    const addr = resolveAddrFromTokens(leftToks);
-                    memory.set(addr, parseInt(inputTokens[inputIndex++] ?? "0") || 0);
-                } else if (cmdVal === '뭐냐') {
-                    out += String(getValFromTokens(leftToks));
-                } else if (cmdVal === '있잖아') {
-                    pc += getValFromTokens(leftToks); jumped = true;
-                }
+                if      (cmdVal === '뭐더라')  { memory.set(resolveAddrFromTokens(leftToks), getValFromTokens(rightToks)); }
+                else if (cmdVal === '진짜뭐지') { const addr = resolveAddrFromTokens(leftToks); const val = inputTokens[inputIndex++] ?? ""; memory.set(addr, val.length > 0 ? val.charCodeAt(0) : 0); }
+                else if (cmdVal === '진짜뭐냐') { out += String.fromCharCode(getValFromTokens(leftToks)); }
+                else if (cmdVal === '뭐지')    { memory.set(resolveAddrFromTokens(leftToks), parseInt(inputTokens[inputIndex++] ?? "0") || 0); }
+                else if (cmdVal === '뭐냐')    { out += String(getValFromTokens(leftToks)); }
+                else if (cmdVal === '있잖아')  { pc += getValFromTokens(leftToks); jumped = true; }
             }
             if (!jumped) pc++;
         }
@@ -354,9 +322,9 @@ async function submitCode(probId) {
         updateProgress(els, i, tcs.length);
 
         let failMsg = "";
-        if      (result.verdict === "TLE")              failMsg = `[테스트 ${i+1}] 시간 초과`;
-        else if (result.verdict === "MLE")              failMsg = `[테스트 ${i+1}] 메모리 초과`;
-        else if (result.verdict.startsWith("RE"))       failMsg = `[테스트 ${i+1}] 런타임 에러\n${result.verdict.slice(4)}`;
+        if      (result.verdict === "TLE")        failMsg = `[테스트 ${i+1}] 시간 초과`;
+        else if (result.verdict === "MLE")        failMsg = `[테스트 ${i+1}] 메모리 초과`;
+        else if (result.verdict.startsWith("RE")) failMsg = `[테스트 ${i+1}] 런타임 에러\n${result.verdict.slice(4)}`;
         else {
             const ok = prob.specialJudge
                 ? prob.specialJudge(result.output.trim(), String(tcs[i].out).trim())
@@ -486,9 +454,9 @@ function switchProblem(probId) {
 function tierClass(tier) { return tier ? "tier-" + tier.name.toLowerCase() : ""; }
 function tierLabel(tier) { return tier ? tier.name + " " + tier.level : ""; }
 
-window.submitCode      = submitCode;
+window.submitCode       = submitCode;
 window.submitCodePython = submitCodePython;
-window.switchProblem   = switchProblem;
+window.switchProblem    = switchProblem;
 
 
 // ════════════════════════════════════════════════════════
@@ -499,10 +467,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainContent = document.getElementById('main-content');
     if (!window.PROBLEMS) return;
 
+    const targetProb = new URLSearchParams(location.search).get('prob');
+
     Object.keys(window.PROBLEMS).sort((a, b) => parseInt(a) - parseInt(b)).forEach((probId, idx) => {
-        const prob = window.PROBLEMS[probId];
-        const tc   = tierClass(prob.tier);
-        const tl   = tierLabel(prob.tier);
+        const prob  = window.PROBLEMS[probId];
+        const tc    = tierClass(prob.tier);
+        const tl    = tierLabel(prob.tier);
         const first = idx === 0;
 
         // 사이드바
@@ -566,6 +536,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
         mainContent.appendChild(page);
     });
+
+    if (targetProb && window.PROBLEMS[targetProb]) switchProblem(targetProb);
 });
 
 function buildExamples(examples) {

@@ -1,361 +1,138 @@
 <!DOCTYPE html>
-
 <html lang="ko">
-
 <head>
-
     <meta charset="UTF-8">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>랭킹 - 그 뭐냐 Judge</title>
-
     <link rel="stylesheet" href="style.css">
-
+    <script type="module" src="navbar.js"></script>
     <script>window.PROBLEMS = window.PROBLEMS || {};</script>
-
     <style>
-
         .ranking-wrap { max-width: 1100px; margin: 80px auto 40px; padding: 0 20px; }
-
         .ranking-title { font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 24px; }
-
         .ranking-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-
         .ranking-table th { background: rgba(48,54,61,0.5); color: var(--text-subtle); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 16px; border-bottom: 1px solid var(--border); text-align: left; }
-
         .ranking-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-
         .ranking-table tr:last-child td { border-bottom: none; }
-
         .ranking-table tr:hover td { background: rgba(88,166,255,0.04); }
-
         .rank-num { font-weight: 800; color: var(--text-subtle); width: 50px; }
-
         .rank-1 { color: #ffd700; }
-
         .rank-2 { color: #c0c0c0; }
-
         .rank-3 { color: #cd7f32; }
-
         .rank-nick a { color: var(--text); text-decoration: none; font-weight: 600; }
-
         .rank-nick a:hover { color: var(--blue); }
-
         .rank-rating { font-weight: 700; color: var(--text); }
-
         #loading { text-align: center; color: var(--text-muted); padding: 40px; }
-
     </style>
-
 </head>
-
 <body>
 
-
-
-<div class="topbar">
-
-    <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
-
-    <div class="topbar-divider"></div>
-
-    <span class="topbar-sub">랭킹</span>
-
-    <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
-
-        <span id="user-info" style="display:none; font-size:0.82rem; color:var(--text-muted);"></span>
-
-        <button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>
-
-        <button id="btn-signup" class="topbar-btn topbar-btn-primary" onclick="location.href='signup.html'">회원가입</button>
-
-        <button id="btn-logout" class="topbar-btn" style="display:none;">로그아웃</button>
-
-    </div>
-
-</div>
-
-
+<div id="topbar" class="topbar" data-subtitle="랭킹"></div>
 
 <div class="ranking-wrap">
-
     <div class="ranking-title">🏆 랭킹</div>
-
     <div id="loading">랭킹 불러오는 중...</div>
-
     <table class="ranking-table" id="ranking-table" style="display:none;">
-
         <thead>
-
             <tr>
-
                 <th>등수</th>
-
                 <th>닉네임</th>
-
                 <th>티어</th>
-
                 <th>레이팅</th>
-
             </tr>
-
         </thead>
-
         <tbody id="ranking-body"></tbody>
-
     </table>
-
 </div>
 
-
-
 <script type="module">
+    import { app }                                               from './firebase.js';
+    import { getFirestore, collection, getDocs }                 from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-    import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-
-    import { getFirestore, collection, getDocs }    from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
-
-
-
-    const firebaseConfig = {
-
-        apiKey: "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA", authDomain: "what-is-that-3cc48.firebaseapp.com",
-
-        projectId: "what-is-that-3cc48", storageBucket: "what-is-that-3cc48.firebasestorage.app",
-
-        messagingSenderId: "745704527046", appId: "1:745704527046:web:1ef97739fdc1348c96b3c7"
-
-    };
-
-
-
-    const app  = initializeApp(firebaseConfig);
-
-    const auth = getAuth(app);
-
-    const db   = getFirestore(app);
-
-
+    const db = getFirestore(app);
 
     const REWARDS = {
-
         "Bronze V":1,"Bronze IV":2,"Bronze III":3,"Bronze II":4,"Bronze I":5,
-
         "Silver V":6,"Silver IV":8,"Silver III":10,"Silver II":12,"Silver I":14,
-
         "Gold V":15,"Gold IV":18,"Gold III":21,"Gold II":24,"Gold I":27,
-
         "Platinum V":32,"Platinum IV":36,"Platinum III":40,"Platinum II":44,"Platinum I":48,
-
         "Diamond V":60,"Diamond IV":65,"Diamond III":70,"Diamond II":75,"Diamond I":80,
-
         "Ruby V":100,"Ruby IV":110,"Ruby III":120,"Ruby II":130,"Ruby I":140
-
     };
 
-
-
     const TIERS = [
-
         {name:"Bronze V",min:0,color:"#ad5600"},{name:"Bronze IV",min:40,color:"#ad5600"},{name:"Bronze III",min:60,color:"#ad5600"},{name:"Bronze II",min:80,color:"#ad5600"},{name:"Bronze I",min:100,color:"#ad5600"},
-
         {name:"Silver V",min:120,color:"#435f7a"},{name:"Silver IV",min:160,color:"#435f7a"},{name:"Silver III",min:200,color:"#435f7a"},{name:"Silver II",min:240,color:"#435f7a"},{name:"Silver I",min:280,color:"#435f7a"},
-
         {name:"Gold V",min:300,color:"#ec9a00"},{name:"Gold IV",min:360,color:"#ec9a00"},{name:"Gold III",min:420,color:"#ec9a00"},{name:"Gold II",min:480,color:"#ec9a00"},{name:"Gold I",min:540,color:"#ec9a00"},
-
         {name:"Platinum V",min:640,color:"#27e2a4"},{name:"Platinum IV",min:720,color:"#27e2a4"},{name:"Platinum III",min:800,color:"#27e2a4"},{name:"Platinum II",min:880,color:"#27e2a4"},{name:"Platinum I",min:960,color:"#27e2a4"},
-
         {name:"Diamond V",min:1200,color:"#00b4fc"},{name:"Diamond IV",min:1300,color:"#00b4fc"},{name:"Diamond III",min:1400,color:"#00b4fc"},{name:"Diamond II",min:1500,color:"#00b4fc"},{name:"Diamond I",min:1600,color:"#00b4fc"},
-
         {name:"Ruby V",min:2000,color:"#ff0062"},{name:"Ruby IV",min:2200,color:"#ff0062"},{name:"Ruby III",min:2400,color:"#ff0062"},{name:"Ruby II",min:2600,color:"#ff0062"},{name:"Ruby I",min:2800,color:"#ff0062"}
-
     ];
 
-
-
     function getTier(rating) {
-
         let tier = TIERS[0];
-
         for (let i = TIERS.length - 1; i >= 0; i--) { if (rating >= TIERS[i].min) { tier = TIERS[i]; break; } }
-
         return tier;
-
     }
-
-
 
     function loadScript(probId) {
-
         return new Promise(resolve => {
-
             if (window.PROBLEMS?.[probId]) { resolve(); return; }
-
             const s = document.createElement('script');
-
             s.src = `problems/${probId}.js`;
-
             s.onload = resolve;
-
             s.onerror = () => resolve();
-
             document.head.appendChild(s);
-
         });
-
     }
 
-
-
-    // 로그인 상태 감지
-
-    onAuthStateChanged(auth, (user) => {
-
-        const userInfo  = document.getElementById('user-info');
-
-        const btnLogin  = document.getElementById('btn-login');
-
-        const btnSignup = document.getElementById('btn-signup');
-
-        const btnLogout = document.getElementById('btn-logout');
-
-        if (user) {
-
-            const name = user.displayName || user.email || "유저";
-
-            userInfo.innerHTML = `<a href="profile.html" style="color:var(--blue);text-decoration:none;font-weight:bold;">${name}</a>`;
-
-            userInfo.style.display = 'inline-block';
-
-            btnLogin.style.display  = 'none';
-
-            btnSignup.style.display = 'none';
-
-            btnLogout.style.display = 'inline-block';
-
-        } else {
-
-            userInfo.style.display  = 'none';
-
-            btnLogin.style.display  = 'inline-block';
-
-            btnSignup.style.display = 'inline-block';
-
-            btnLogout.style.display = 'none';
-
-        }
-
-    });
-
-
-
-    document.getElementById('btn-logout').addEventListener('click', () => {
-
-        signOut(auth).then(() => location.href = 'index.html');
-
-    });
-
-
-
-    // 랭킹 로드
-
     async function loadRanking() {
-
         try {
-
             const snap = await getDocs(collection(db, "users"));
-
             const users = [];
 
-
-
-            // 모든 유저의 solved 문제 스크립트 로드
-
             const allSolved = new Set();
-
             snap.forEach(d => (d.data().solvedProblems || []).forEach(id => allSolved.add(id)));
-
             await Promise.all([...allSolved].map(loadScript));
 
-
-
-            // 레이팅 계산
-
             snap.forEach(d => {
-
                 const data   = d.data();
-
                 const solved = data.solvedProblems || [];
-
                 const rating = solved.reduce((sum, id) => {
-
                     const p = window.PROBLEMS?.[id];
-
                     return sum + (p?.tier ? (REWARDS[`${p.tier.name} ${p.tier.level}`] || 0) : 0);
-
                 }, 0);
-
                 users.push({ uid: d.id, nickname: data.nickname || data.email || "익명", rating });
-
             });
-
-
-
-            // 레이팅 내림차순 정렬
 
             users.sort((a, b) => b.rating - a.rating);
 
-
-
-            // 테이블 렌더링
-
             const tbody = document.getElementById('ranking-body');
-
             users.forEach((u, i) => {
-
-                const tier     = getTier(u.rating);
-
-                const rankNum  = i + 1;
-
+                const tier      = getTier(u.rating);
+                const rankNum   = i + 1;
                 const rankClass = rankNum <= 3 ? `rank-${rankNum}` : '';
-
-                const medal    = rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : rankNum === 3 ? '🥉' : rankNum;
-
+                const medal     = rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : rankNum === 3 ? '🥉' : rankNum;
                 const tr = document.createElement('tr');
-
                 tr.innerHTML =
-
                     `<td class="rank-num ${rankClass}">${medal}</td>
-
                      <td class="rank-nick"><a href="profile.html?uid=${u.uid}">${u.nickname}</a></td>
-
                      <td><span class="tier-badge tier-${tier.name.split(' ')[0].toLowerCase()}" style="color:${tier.color};border-color:${tier.color};">${tier.name}</span></td>
-
                      <td class="rank-rating">${u.rating}점</td>`;
-
                 tbody.appendChild(tr);
-
             });
 
-
-
             document.getElementById('loading').style.display = 'none';
-
             document.getElementById('ranking-table').style.display = 'table';
 
-
-
-        } catch(e) { console.error(e); document.getElementById('loading').textContent = "랭킹 로드 실패"; }
-
+        } catch(e) {
+            console.error(e);
+            document.getElementById('loading').textContent = "랭킹 로드 실패";
+        }
     }
 
-
-
     loadRanking();
-
 </script>
 
 </body>
-
 </html>

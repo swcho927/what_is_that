@@ -2,12 +2,14 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>프로필 - 그 뭐냐 Judge</title>
     <link rel="stylesheet" href="style.css">
+    <script type="module" src="navbar.js"></script>
     <script>window.PROBLEMS = window.PROBLEMS || {};</script>
     <style>
         .profile-wrap { display:flex; justify-content:center; min-height:calc(100vh - 52px); margin-top:52px; padding:40px 20px; }
-        .profile-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:40px; width:100%; max-width:550px; box-shadow:0 8px 32px rgba(0,0,0,0.24); height: fit-content; }
+        .profile-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:40px; width:100%; max-width:550px; box-shadow:0 8px 32px rgba(0,0,0,0.24); height:fit-content; }
         .profile-header-ui { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:24px; }
         .profile-nickname { font-size:2.2rem; font-weight:900; color:var(--text); letter-spacing:-1px; }
         .tier-tag { font-size:1.3rem; font-weight:800; padding:6px 14px; background:rgba(255,255,255,0.05); border-radius:30px; border:1px solid currentColor; }
@@ -23,8 +25,6 @@
         .remain-text { font-size:0.8rem; color:#3fb950; margin-top:2px; font-weight:800; }
         .rating-bar-bg { width:100%; height:14px; background:#21262d; border-radius:10px; overflow:hidden; border:1px solid #30363d; }
         .rating-bar-fill { height:100%; width:0%; border-radius:10px; transition:width 1.2s cubic-bezier(0.4,0,0.2,1); }
-
-        /* 푼 문제 목록 */
         .solved-section { margin-top:32px; border-top:1px solid var(--border); padding-top:24px; }
         .solved-section-title { font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:14px; }
         .solved-list { display:flex; flex-direction:column; gap:8px; }
@@ -34,23 +34,12 @@
         .solved-title { font-size:0.9rem; color:var(--text); font-weight:600; flex:1; }
         .solved-tier { font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; border:1px solid currentColor; background:rgba(255,255,255,0.04); }
         .solved-empty { font-size:0.85rem; color:var(--text-subtle); text-align:center; padding:20px; }
-
         #loading { text-align:center; color:var(--text-muted); font-weight:bold; }
     </style>
 </head>
 <body>
 
-<div class="topbar">
-    <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
-    <div class="topbar-divider"></div>
-    <span class="topbar-sub">유저 프로필</span>
-    <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
-        <span id="user-info" style="display:none; font-size:0.82rem; color:var(--text-muted);"></span>
-        <button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>
-        <button id="btn-signup" class="topbar-btn topbar-btn-primary" onclick="location.href='signup.html'">회원가입</button>
-        <button id="btn-logout" class="topbar-btn" style="display:none;">로그아웃</button>
-    </div>
-</div>
+<div id="topbar" class="topbar" data-subtitle="유저 프로필"></div>
 
 <div class="profile-wrap">
     <div class="profile-card">
@@ -96,8 +85,6 @@
                     구간 진행도: <span id="progress-percent">0%</span>
                 </div>
             </div>
-
-            <!-- 푼 문제 목록 -->
             <div class="solved-section">
                 <div class="solved-section-title">✅ 푼 문제</div>
                 <div class="solved-list" id="solved-list"></div>
@@ -107,17 +94,10 @@
 </div>
 
 <script type="module">
-    import { initializeApp }               from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc }   from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+    import { app }                                             from './firebase.js';
+    import { getAuth, onAuthStateChanged }                     from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc }                       from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA", authDomain: "what-is-that-3cc48.firebaseapp.com",
-        projectId: "what-is-that-3cc48", storageBucket: "what-is-that-3cc48.firebasestorage.app",
-        messagingSenderId: "745704527046", appId: "1:745704527046:web:1ef97739fdc1348c96b3c7"
-    };
-
-    const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
@@ -169,29 +149,7 @@
         if (color) el.style.color = color;
     }
 
-    // 상단바 로그인 상태
     onAuthStateChanged(auth, async (user) => {
-        const userInfo  = document.getElementById('user-info');
-        const btnLogin  = document.getElementById('btn-login');
-        const btnSignup = document.getElementById('btn-signup');
-        const btnLogout = document.getElementById('btn-logout');
-
-        if (user) {
-            const name = user.displayName || user.email || "유저";
-            userInfo.innerHTML = `<a href="profile.html" style="color:var(--blue);text-decoration:none;font-weight:bold;">${name}</a>`;
-            userInfo.style.display = 'inline-block';
-            btnLogin.style.display  = 'none';
-            btnSignup.style.display = 'none';
-            btnLogout.style.display = 'inline-block';
-        } else {
-            userInfo.style.display  = 'none';
-            btnLogin.style.display  = 'inline-block';
-            btnSignup.style.display = 'inline-block';
-            btnLogout.style.display = 'none';
-        }
-
-        btnLogout.addEventListener('click', () => signOut(auth).then(() => location.href = 'index.html'));
-
         if (!user) { alert("로그인이 필요합니다."); location.href = 'login.html'; return; }
 
         try {
@@ -218,16 +176,16 @@
                 ? (data.joinedAt.toDate?.() ?? new Date(data.joinedAt)).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'})
                 : "-";
 
-            setText('prof-nickname',   nickname);
-            setText('tier-name',       curr.name,  curr.color);
-            setText('stat-rating',     `${rating} 점`);
-            setText('stat-solved',     `${solved.length} 개`);
-            setText('stat-date',       date);
-            setText('prog-curr-tier',  curr.name,  curr.color);
-            setText('prog-curr-min',   `${curr.min}점`);
-            setText('prog-next-tier',  next?.name ?? "MAX", next?.color ?? curr.color);
-            setText('prog-next-min',   next ? `${next.min}점` : "");
-            setText('prog-my-rating',  rating);
+            setText('prof-nickname',    nickname);
+            setText('tier-name',        curr.name,  curr.color);
+            setText('stat-rating',      `${rating} 점`);
+            setText('stat-solved',      `${solved.length} 개`);
+            setText('stat-date',        date);
+            setText('prog-curr-tier',   curr.name,  curr.color);
+            setText('prog-curr-min',    `${curr.min}점`);
+            setText('prog-next-tier',   next?.name ?? "MAX", next?.color ?? curr.color);
+            setText('prog-next-min',    next ? `${next.min}점` : "");
+            setText('prog-my-rating',   rating);
             setText('prog-remain-text', remainText);
             setText('progress-percent', progress + '%');
 
@@ -235,25 +193,22 @@
             bar.style.backgroundColor = curr.color;
             setTimeout(() => { bar.style.width = (progress == 0 ? 1.5 : progress) + '%'; }, 100);
 
-            // 푼 문제 목록 렌더링
             const solvedList = document.getElementById('solved-list');
             if (solved.length === 0) {
                 solvedList.innerHTML = '<div class="solved-empty">아직 푼 문제가 없어요.</div>';
             } else {
-                // 문제 번호 오름차순 정렬
-                const sortedSolved = [...solved].sort((a, b) => parseInt(a) - parseInt(b));
-                sortedSolved.forEach(id => {
+                [...solved].sort((a, b) => parseInt(a) - parseInt(b)).forEach(id => {
                     const p     = window.PROBLEMS?.[id];
                     const color = p?.tier ? getTierColor(p.tier) : '#8b949e';
                     const tier  = p?.tier ? `${p.tier.name} ${p.tier.level}` : '?';
                     const title = p?.title || id;
                     const item  = document.createElement('div');
                     item.className = 'solved-item';
-                    item.onclick   = () => location.href = `judge.html`;
+                    item.onclick   = () => location.href = `judge.html?prob=${id}`;
                     item.innerHTML =
-                        `<span class="solved-num">${id}</span>
-                         <span class="solved-title">${title}</span>
-                         <span class="solved-tier" style="color:${color};border-color:${color};">${tier}</span>`;
+                        `<span class="solved-num">${id}</span>` +
+                        `<span class="solved-title">${title}</span>` +
+                        `<span class="solved-tier" style="color:${color};border-color:${color};">${tier}</span>`;
                     solvedList.appendChild(item);
                 });
             }
@@ -264,5 +219,6 @@
         } catch(e) { console.error(e); alert("프로필 로드 중 오류가 발생했습니다."); }
     });
 </script>
+
 </body>
 </html>

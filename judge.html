@@ -2,35 +2,25 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>채점 - 그 뭐냐 Judge</title>
     <link rel="stylesheet" href="style.css">
+    <script type="module" src="navbar.js"></script>
     <script>
         window.PROBLEMS = {};
         function showAddProblemPopup() {
             document.getElementById('addProblemOverlay').style.display = 'block';
-            document.getElementById('addProblemPopup').style.display = 'block';
+            document.getElementById('addProblemPopup').style.display  = 'block';
         }
         function hideAddProblemPopup() {
             document.getElementById('addProblemOverlay').style.display = 'none';
-            document.getElementById('addProblemPopup').style.display = 'none';
+            document.getElementById('addProblemPopup').style.display  = 'none';
         }
     </script>
 </head>
 <body>
 
-<div class="topbar">
-    <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
-    <div class="topbar-divider"></div>
-    <span class="topbar-sub">그 뭐냐 언어 온라인 채점 사이트</span>
-    <button class="topbar-btn" onclick="location.href='ranking.html'" style="margin-left: 10px;">랭킹</button>
-    
-    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
-        <span id="user-info" style="display:none; font-size:0.82rem; color:var(--text-muted);"></span>
-        <button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>
-        <button id="btn-signup" class="topbar-btn topbar-btn-primary" onclick="location.href='signup.html'">회원가입</button>
-        <button id="btn-logout" class="topbar-btn" style="display:none;">로그아웃</button>
-    </div>
-</div>
+<div id="topbar" class="topbar" data-subtitle="그 뭐냐 언어 온라인 채점 사이트" data-ranking></div>
 
 <div class="layout">
     <nav class="sidebar">
@@ -43,8 +33,6 @@
     <div class="main-content" id="main-content"></div>
 </div>
 
-
-
 <script src="problems/0523.js"></script>
 <script src="problems/1000.js"></script>
 <script src="problems/1001.js"></script>
@@ -56,14 +44,12 @@
 <script src="problems/3000.js"></script>
 <script src="problems/9001.js"></script>
 
-
-
 <script type="module" src="judge.js"></script>
 
 <div class="popup-overlay" id="addProblemOverlay" onclick="hideAddProblemPopup()" style="display:none;"></div>
 <div class="popup" id="addProblemPopup" style="display:none;">
     <h2 class="popup-title">문제 추가</h2>
-    <div class="popup-body" style="max-height: 400px; overflow-y: auto; font-size: 0.85rem; line-height: 1.6;">
+    <div class="popup-body" style="max-height:400px; overflow-y:auto; font-size:0.85rem; line-height:1.6;">
         그 뭐냐 Judge는 현재 서버 없이 운영되고 있어 Gmail을 통해 문제 추가를 요청할 수 있습니다.
         주어진 양식에 맞춰 <a href="https://mail.google.com/mail/?view=cm&fs=1&to=swcho927@gmail.com" target="_blank">swcho927@gmail.com</a>으로 메일을 보내주시면 문제 검토 후 추가하도록 하겠습니다.<br><br>
         <strong>[양식]</strong><br>문제 제목 / 시간·메모리 제한 / 난이도 / 문제 내용 / 입력 형식 / 출력 형식 / 예제<br><br>

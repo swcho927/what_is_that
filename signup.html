@@ -2,119 +2,33 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>회원가입 - 그 뭐냐 Judge</title>
     <link rel="stylesheet" href="style.css">
+    <script type="module" src="navbar.js"></script>
     <style>
-        .auth-wrap {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: calc(100vh - 52px);
-            margin-top: 52px;
-        }
-        .auth-box {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 36px 40px;
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .auth-title {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: var(--text);
-            margin-bottom: 4px;
-        }
-        .auth-subtitle {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            margin-top: -8px;
-        }
-        .auth-btn {
-            width: 100%;
-            padding: 11px;
-            border-radius: 7px;
-            font-size: 0.95rem;
-            font-weight: 700;
-            cursor: pointer;
-            border: none;
-            transition: all 0.15s;
-        }
-        .auth-btn-google {
-            background: var(--bg-main);
-            color: var(--text);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .auth-btn-google:hover {
-            border-color: var(--blue);
-            color: var(--blue);
-        }
-        .auth-input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .auth-input-label {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text);
-        }
-        .auth-input {
-            width: 100%;
-            padding: 11px;
-            border-radius: 7px;
-            background: var(--bg-main);
-            border: 1px solid var(--border);
-            color: var(--text);
-            font-size: 0.9rem;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.15s;
-        }
-        .auth-input:focus {
-            border-color: var(--blue);
-        }
-        .auth-btn-submit {
-            background: var(--blue);
-            color: #ffffff;
-            margin-top: 8px;
-        }
-        .auth-btn-submit:hover {
-            opacity: 0.9;
-        }
-        .auth-error {
-            color: var(--red);
-            font-size: 0.82rem;
-            display: none;
-            line-height: 1.4;
-        }
-        .auth-link {
-            text-align: center;
-            font-size: 0.82rem;
-            color: var(--text-muted);
-        }
-        .auth-link a {
-            color: var(--blue);
-            text-decoration: none;
-        }
-        .auth-link a:hover { text-decoration: underline; }
+        .auth-wrap { display:flex; justify-content:center; align-items:center; min-height:calc(100vh - 52px); margin-top:52px; }
+        .auth-box { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:36px 40px; width:100%; max-width:400px; display:flex; flex-direction:column; gap:16px; }
+        .auth-title { font-size:1.4rem; font-weight:800; color:var(--text); margin-bottom:4px; }
+        .auth-subtitle { font-size:0.82rem; color:var(--text-muted); margin-top:-8px; }
+        .auth-btn { width:100%; padding:11px; border-radius:7px; font-size:0.95rem; font-weight:700; cursor:pointer; border:none; transition:all 0.15s; }
+        .auth-btn-google { background:var(--bg-main); color:var(--text); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; gap:8px; }
+        .auth-btn-google:hover { border-color:var(--blue); color:var(--blue); }
+        .auth-input-group { display:flex; flex-direction:column; gap:6px; }
+        .auth-input-label { font-size:0.8rem; font-weight:700; color:var(--text); }
+        .auth-input { width:100%; padding:11px; border-radius:7px; background:var(--bg-main); border:1px solid var(--border); color:var(--text); font-size:0.9rem; box-sizing:border-box; outline:none; transition:border-color 0.15s; }
+        .auth-input:focus { border-color:var(--blue); }
+        .auth-btn-submit { background:var(--blue); color:#ffffff; margin-top:8px; }
+        .auth-btn-submit:hover { opacity:0.9; }
+        .auth-error { color:var(--red); font-size:0.82rem; display:none; line-height:1.4; }
+        .auth-link { text-align:center; font-size:0.82rem; color:var(--text-muted); }
+        .auth-link a { color:var(--blue); text-decoration:none; }
+        .auth-link a:hover { text-decoration:underline; }
     </style>
 </head>
 <body>
 
-<div class="topbar">
-    <span class="topbar-brand" onclick="location.href='index.html'" style="cursor:pointer;">그 뭐냐 <span>Judge</span></span>
-    <div class="topbar-divider"></div>
-    <span class="topbar-sub">그 뭐냐 언어 온라인 채점 사이트</span>
-</div>
+<div id="topbar" class="topbar" data-no-auth></div>
 
 <div class="auth-wrap">
     <div class="auth-box">
@@ -135,55 +49,40 @@
                 </svg>
                 구글 계정으로 가입
             </button>
-            <div class="auth-link" style="margin-top: 16px;">이미 계정이 있으신가요? <a href="login.html">로그인</a></div>
+            <div class="auth-link" style="margin-top:16px;">이미 계정이 있으신가요? <a href="login.html">로그인</a></div>
         </div>
 
-        <div id="step-info" style="display: none; flex-direction: column; gap: 16px;">
+        <div id="step-info" style="display:none; flex-direction:column; gap:16px;">
             <div class="auth-input-group">
                 <label class="auth-input-label">이름</label>
                 <input type="text" id="reg-name" class="auth-input" placeholder="실명을 입력하세요">
             </div>
-            
             <div class="auth-input-group">
                 <label class="auth-input-label">닉네임</label>
                 <input type="text" id="reg-nickname" class="auth-input" placeholder="사이트에서 사용할 닉네임">
             </div>
-
             <div class="auth-input-group">
                 <label class="auth-input-label">생년월일</label>
                 <input type="date" id="reg-birth" class="auth-input">
             </div>
-
             <button class="auth-btn auth-btn-submit" onclick="completeSignUp()">가입 완료하기</button>
         </div>
-
     </div>
 </div>
 
 <script type="module">
-    import { initializeApp }                                      from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, 
-             signOut, updateProfile, getAdditionalUserInfo }     from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+    import { app }                                                from './firebase.js';
+    import { getAuth, signInWithPopup, GoogleAuthProvider,
+             signOut, updateProfile, getAdditionalUserInfo }      from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import { getFirestore, doc, setDoc }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
-        authDomain:        "what-is-that-3cc48.firebaseapp.com",
-        projectId:         "what-is-that-3cc48",
-        storageBucket:     "what-is-that-3cc48.firebasestorage.app",
-        messagingSenderId: "745704527046",
-        appId:             "1:745704527046:web:1ef97739fdc1348c96b3c7",
-        measurementId:     "G-YKN1NFTZRM"
-    };
-
-    const app      = initializeApp(firebaseConfig);
     const auth     = getAuth(app);
     const db       = getFirestore(app);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
 
     function showError(msg) {
-        var el = document.getElementById('error-msg');
+        const el = document.getElementById('error-msg');
         el.textContent = msg;
         el.style.display = 'block';
     }
@@ -191,7 +90,7 @@
     window.signUpGoogle = async function() {
         try {
             document.getElementById('error-msg').style.display = 'none';
-            const result = await signInWithPopup(auth, provider);
+            const result         = await signInWithPopup(auth, provider);
             const additionalInfo = getAdditionalUserInfo(result);
 
             if (additionalInfo && !additionalInfo.isNewUser) {
@@ -221,29 +120,20 @@
 
         try {
             const user = auth.currentUser;
-
-            await updateProfile(user, {
-                displayName: nickname
-            });
-
-            // 🌟 초기 레이팅 0점 포함하여 데이터베이스 완전히 저장!
+            await updateProfile(user, { displayName: nickname });
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
                 email: user.email,
-                name: name,
-                nickname: nickname,
-                birth: birth,
-                rating: 0, 
+                name, nickname, birth,
                 joinedAt: new Date()
             });
-
             alert(`${nickname}님, 가입을 환영합니다! 🎉`);
             location.href = 'index.html';
-
         } catch(e) {
             alert('가입 처리 중 오류 발생: ' + e.message);
         }
     };
 </script>
+
 </body>
 </html>

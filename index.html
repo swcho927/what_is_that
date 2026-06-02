@@ -5,65 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>그 뭐냐 Judge</title>
     <link rel="stylesheet" href="style.css">
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey:            "AIzaSyASbcbiXA9SQ3bohWVK7w6xS74Y_RTZhaA",
-            authDomain:        "what-is-that-3cc48.firebaseapp.com",
-            projectId:         "what-is-that-3cc48",
-            storageBucket:     "what-is-that-3cc48.firebasestorage.app",
-            messagingSenderId: "745704527046",
-            appId:             "1:745704527046:web:1ef97739fdc1348c96b3c7",
-            measurementId:     "G-YKN1NFTZRM"
-        };
-
-        const app  = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-
-        onAuthStateChanged(auth, (user) => {
-            const userInfo  = document.getElementById('user-info');
-            const btnLogin  = document.getElementById('btn-login');
-            const btnSignup = document.getElementById('btn-signup');
-            const btnLogout = document.getElementById('btn-logout');
-            const loggedIn  = !!user;
-
-            if (loggedIn) {
-                const displayName = user.displayName || user.email || "유저";
-                userInfo.innerHTML = `<a href="profile.html">${displayName}</a>`;
-            } else {
-                userInfo.innerHTML = '';
-            }
-
-            userInfo.style.display  = loggedIn ? 'inline-block' : 'none';
-            btnLogin.style.display  = loggedIn ? 'none' : 'inline-block';
-            btnSignup.style.display = loggedIn ? 'none' : 'inline-block';
-            btnLogout.style.display = loggedIn ? 'inline-block' : 'none';
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('btn-logout').addEventListener('click', () => {
-                signOut(auth).then(() => location.href = 'index.html');
-            });
-        });
-    </script>
+    <script type="module" src="navbar.js"></script>
 </head>
 <body>
 
-<div class="topbar">
-    <span class="topbar-brand" onclick="location.href='index.html'">그 뭐냐 <span>Judge</span></span>
-    <div class="topbar-divider"></div>
-    <span class="topbar-sub">그 뭐냐 언어 온라인 채점 사이트</span>
-    <button class="topbar-btn" onclick="location.href='ranking.html'">랭킹</button>
-
-    <div class="topbar-auth">
-        <span id="user-info" class="topbar-user" style="display:none;"></span>
-        <button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>
-        <button id="btn-signup" class="topbar-btn topbar-btn-primary" onclick="location.href='signup.html'">회원가입</button>
-        <button id="btn-logout" class="topbar-btn" style="display:none;">로그아웃</button>
-    </div>
-</div>
+<div id="topbar" class="topbar" data-subtitle="그 뭐냐 언어 온라인 채점 사이트" data-ranking></div>
 
 <div class="home-wrap">
     <div class="home-hero">

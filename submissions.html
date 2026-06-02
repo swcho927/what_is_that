@@ -114,6 +114,20 @@
 
     function esc(s) { return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+    // 문제 제목은 저장값 대신 문제 정의에서 가져와 일관 표시 (저장된 problemTitle은 폴백)
+    function getTitle(s) { return window.PROBLEMS?.[s.problemId]?.title || s.problemTitle || ""; }
+
+    function loadScript(probId) {
+        return new Promise(resolve => {
+            if (window.PROBLEMS?.[probId]) { resolve(); return; }
+            const sc = document.createElement('script');
+            sc.src = `problems/${probId}.js`;
+            sc.onload = resolve;
+            sc.onerror = () => resolve();
+            document.head.appendChild(sc);
+        });
+    }
+
     function fmtMem(bytes) {
         if (!bytes) return "0 B";
         return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
@@ -178,8 +192,7 @@
     function applyProblemLock() {
         selectedProb = new URLSearchParams(location.search).get('problem') || "";
         if (selectedProb) {
-            const title = allSubs.find(s => s.problemId === selectedProb)?.problemTitle || "";
-            document.getElementById('sub-title').textContent = `${selectedProb} ${title} 제출 현황`;
+            document.getElementById('sub-title').textContent = `${selectedProb} 제출 현황`;
             document.title = `${selectedProb} 제출 현황 - 그 뭐냐 Judge`;
         }
     }

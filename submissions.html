@@ -11,7 +11,6 @@
         .sub-wrap { max-width: 1200px; margin: 80px auto 40px; padding: 0 20px; }
         .sub-title { font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 20px; }
         .sub-controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 18px; }
-        .sub-prob-select { padding: 8px 14px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; min-width: 200px; }
         .sub-toggle { display: flex; gap: 8px; }
         .sub-toggle button { padding: 8px 18px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-subtle); border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
         .sub-toggle button.active { background: var(--blue); color: #fff; border-color: var(--blue); }
@@ -40,6 +39,8 @@
         .code-modal-head .meta strong { color: var(--text); }
         .code-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; line-height: 1; }
         .code-close:hover { color: var(--text); }
+        .code-copy { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-subtle); font-size: 0.78rem; font-weight: 600; padding: 6px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+        .code-copy:hover { color: var(--text); border-color: var(--blue); }
         .code-modal pre { margin: 0; padding: 18px 20px; overflow: auto; font-family: 'Consolas','Courier New',monospace; font-size: 0.88rem; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-all; }
     </style>
 </head>
@@ -48,9 +49,8 @@
 <div id="topbar" class="topbar" data-subtitle="제출 기록" data-ranking data-submissions></div>
 
 <div class="sub-wrap">
-    <div class="sub-title">📜 제출 기록</div>
+    <div class="sub-title" id="sub-title">📜 제출 기록</div>
     <div class="sub-controls">
-        <select id="prob-select" class="sub-prob-select"></select>
         <div class="sub-toggle">
             <button id="btn-all"  class="active">전체 기록</button>
             <button id="btn-mine">내 기록</button>
@@ -81,7 +81,10 @@
                 <div style="font-weight:700;color:var(--text);" id="cm-title">제출 코드</div>
                 <div class="meta" id="cm-meta"></div>
             </div>
-            <button class="code-close" id="cm-close">&times;</button>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button class="code-copy" id="cm-copy">📋 복사</button>
+                <button class="code-close" id="cm-close">&times;</button>
+            </div>
         </div>
         <pre id="cm-code"></pre>
     </div>
@@ -166,19 +169,14 @@
         });
     }
 
-    function populateProblems() {
-        const titles = new Map();
-        allSubs.forEach(s => { if (!titles.has(s.problemId)) titles.set(s.problemId, s.problemTitle || ""); });
-        const ids = [...titles.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
-        const sel = document.getElementById('prob-select');
-        sel.innerHTML = `<option value="">전체 문제</option>` +
-            ids.map(id => `<option value="${esc(id)}">${esc(id)} ${esc(titles.get(id))}</option>`).join('');
-
-        // ?problem=ID 가 있으면 그 문제 선택, 없으면 전체 문제
-        const param = new URLSearchParams(location.search).get('problem');
-        selectedProb = (param && ids.includes(param)) ? param : "";
-        sel.value = selectedProb;
+    // ?problem=ID 로 들어오면 그 문제 기록만 (상단 버튼으로 들어오면 전체 기록)
+    function applyProblemLock() {
+        selectedProb = new URLSearchParams(location.search).get('problem') || "";
+        if (selectedProb) {
+            const title = allSubs.find(s => s.problemId === selectedProb)?.problemTitle || "";
+            document.getElementById('sub-title').textContent = `📜 ${selectedProb} ${title} 제출 기록`;
+            document.title = `${selectedProb} 제출 기록 - 그 뭐냐 Judge`;
+        }
     }
 
     function openCode(s) {
@@ -192,6 +190,23 @@
     }
     function closeCode() { document.getElementById('code-overlay').classList.remove('show'); }
 
+    async function copyCode() {
+        const code = document.getElementById('cm-code').textContent;
+        const btn  = document.getElementById('cm-copy');
+        try {
+            await navigator.clipboard.writeText(code);
+        } catch(_) {
+            // clipboard API 미지원/거부 시 폴백
+            const ta = document.createElement('textarea');
+            ta.value = code; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch(__) {}
+            document.body.removeChild(ta);
+        }
+        btn.textContent = "✅ 복사됨";
+        setTimeout(() => { btn.textContent = "📋 복사"; }, 1000);
+    }
+
     // 정렬 헤더
     document.querySelectorAll('th.sortable').forEach(th => {
         th.addEventListener('click', () => {
@@ -200,12 +215,6 @@
             else { sortKey = key; sortDir = (key === "submittedAt" ? "desc" : "asc"); }
             render();
         });
-    });
-
-    // 문제 선택
-    document.getElementById('prob-select').addEventListener('change', e => {
-        selectedProb = e.target.value;
-        render();
     });
 
     // 전체 / 내 기록 토글
@@ -223,7 +232,8 @@
         render();
     });
 
-    // 모달 닫기
+    // 모달 닫기 / 복사
+    document.getElementById('cm-copy').addEventListener('click', copyCode);
     document.getElementById('cm-close').addEventListener('click', closeCode);
     document.getElementById('code-overlay').addEventListener('click', e => {
         if (e.target.id === 'code-overlay') closeCode();
@@ -243,7 +253,7 @@
                 allSubs.push(x);
             });
             document.getElementById('loading').style.display = "none";
-            populateProblems();
+            applyProblemLock();
             render();
         } catch(e) {
             console.error(e);

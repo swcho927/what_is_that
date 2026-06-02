@@ -13,13 +13,14 @@ if (el) {
         `<span class="topbar-brand" onclick="location.href='index.html'">그 뭐냐 <span>Judge</span></span>` +
         `<div class="topbar-divider"></div>` +
         `<span class="topbar-sub">${subtitle}</span>` +
-        (hasRanking ? `<button class="topbar-btn" onclick="location.href='ranking.html'" style="margin-left:10px;border:none;">랭킹</button>` : '') +
+        (hasRanking ? `<button class="topbar-btn" onclick="location.href='judge.html'" style="margin-left:10px;border:none;">문제</button>` : '') +
+        (hasRanking ? `<button class="topbar-btn" onclick="location.href='ranking.html'" style="margin-left:6px;border:none;">랭킹</button>` : '') +
         (hasSubmissions ? `<button class="topbar-btn" onclick="location.href='submissions.html'" style="margin-left:6px;border:none;">제출 기록</button>` : '') +
         (!noAuth
             ? `<div class="topbar-auth">` +
                 `<span id="user-info" class="topbar-user" style="display:none;"></span>` +
-                `<button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'">로그인</button>` +
-                `<button id="btn-signup" class="topbar-btn topbar-btn-primary" onclick="location.href='signup.html'">회원가입</button>` +
+                `<button id="btn-login"  class="topbar-btn" onclick="location.href='login.html'" style="display:none;">로그인</button>` +
+                `<button id="btn-signup" class="topbar-btn topbar-btn-primary" onclick="location.href='signup.html'" style="display:none;">회원가입</button>` +
                 `<button id="btn-logout" class="topbar-btn" style="display:none;">로그아웃</button>` +
               `</div>`
             : '');

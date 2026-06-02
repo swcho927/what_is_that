@@ -301,14 +301,26 @@ body {
 .btn-submit:active { transform: translateY(0); }
 
 .btn-records {
-    display: inline-block;
+    display: block;
+    width: 100%;
     margin-top: 10px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text-subtle);
+    padding: 12px;
+    box-sizing: border-box;
+    text-align: center;
+    background: var(--bg-card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
     text-decoration: none;
+    transition: all 0.18s;
 }
-.btn-records:hover { color: var(--blue); }
+.btn-records:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+    transform: translateY(-1px);
+}
 
 /* ── 채점 진행 영역 ── */
 .judge-area { margin-top: 16px; }

@@ -16,13 +16,24 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // 제출 기록
+    // 제출 기록 (메타데이터 — 코드 제외, 공개)
     match /submissions/{subId} {
-      allow read: if true;                                   // 모든 사람의 제출 기록 공개 조회
+      allow read: if true;                                   // 모든 사람의 제출 현황 공개 조회
       allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.uid
-                    && request.resource.data.code.size() <= 20000;  // 코드 길이 제한(악용 방지)
-      allow update, delete: if false;                        // 제출 기록은 변경 불가
+                    && request.auth.uid == request.resource.data.uid;
+      allow update, delete: if false;                        // 변경 불가
+
+      // 제출 코드 (서브문서) — "그 문제를 푼 사람만" 읽기 허용
+      match /private/{d} {
+        allow read: if request.auth != null
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid))
+                         .data.get('solvedProblems', [])
+                         .hasAny([resource.data.problemId]);
+        allow create: if request.auth != null
+                      && request.auth.uid == request.resource.data.uid
+                      && request.resource.data.code.size() <= 20000;  // 코드 길이 제한
+        allow update, delete: if false;
+      }
     }
   }
 }

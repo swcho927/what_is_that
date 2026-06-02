@@ -1,6 +1,6 @@
 import { app }            from './firebase.js';
 import { getAuth, onAuthStateChanged }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, addDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
 const auth = getAuth(app);
 const db   = getFirestore(app);
@@ -42,7 +42,8 @@ async function recordSubmission(prob, code, verdict, timeMs, memBytes) {
             const snap = await getDoc(doc(db, "users", user.uid));
             if (snap.exists() && snap.data().nickname) nickname = snap.data().nickname;
         } catch(_) {}
-        await addDoc(collection(db, "submissions"), {
+        // 메타데이터는 공개 문서로 저장 (코드는 제외)
+        const ref = await addDoc(collection(db, "submissions"), {
             uid:          user.uid,
             nickname:     nickname,
             problemId:    String(prob.id),
@@ -52,8 +53,13 @@ async function recordSubmission(prob, code, verdict, timeMs, memBytes) {
             timeMs:       Math.round(timeMs),
             memBytes:     Math.round(memBytes),
             codeLength:   new TextEncoder().encode(code).length,   // UTF-8 바이트 수
-            code:         code,
             submittedAt:  serverTimestamp()
+        });
+        // 코드는 서브문서로 분리 — 보안 규칙으로 "그 문제를 푼 사람만" 읽기 허용
+        await setDoc(doc(db, "submissions", ref.id, "private", "code"), {
+            code:      code,
+            problemId: String(prob.id),
+            uid:       user.uid
         });
     } catch(e) { console.error("제출 기록 저장 실패:", e); }
 }

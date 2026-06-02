@@ -47,6 +47,7 @@
         .code-copy { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-subtle); font-size: 0.78rem; font-weight: 600; padding: 6px 12px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
         .code-copy:hover { color: var(--text); border-color: var(--blue); }
         .code-modal pre { margin: 0; padding: 18px 20px; overflow: auto; font-family: 'Consolas','Courier New',monospace; font-size: 0.88rem; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-all; }
+        .code-modal pre.cm-locked { font-family: inherit; color: var(--text-muted); text-align: center; padding: 48px 20px; white-space: normal; }
     </style>
 </head>
 <body>
@@ -98,13 +99,14 @@
 <script type="module">
     import { app }                                                          from './firebase.js';
     import { getAuth, onAuthStateChanged }                                  from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, orderBy, limit }     from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
     const auth = getAuth(app);
     const db   = getFirestore(app);
 
     let allSubs      = [];     // 전체 제출
     let myUid        = null;
+    let mySolved     = new Set();  // 현재 로그인 유저가 푼 문제 ID
     let viewMine     = false;
     let selectedProb = "";     // 현재 선택된 문제 ID ("" = 전체 문제)
     let sortKey      = "submittedAt";
@@ -197,15 +199,45 @@
         }
     }
 
-    function openCode(s) {
+    let codeReqId = 0;   // 비동기 코드 로드 경쟁 방지
+    async function openCode(s) {
         const label = VERDICT_LABEL[s.verdict] || s.verdict || "-";
         document.getElementById('cm-title').innerHTML =
             `<a class="cm-link" href="judge.html?prob=${esc(s.problemId)}">${esc(s.problemId)} ${esc(s.problemTitle)}</a>`;
         document.getElementById('cm-meta').innerHTML =
             `<strong><a class="cm-link" href="profile.html?uid=${esc(s.uid)}">${esc(s.nickname)}</a></strong> · <span class="${s.success ? 'v-ac' : 'v-fail'}">${esc(label)}</span> · ` +
             `${s.timeMs} ms · ${fmtMem(s.memBytes)} · ${s.codeLength} B · ${fmtTime(s.submittedAt)}`;
-        document.getElementById('cm-code').textContent = s.code || "(코드 없음)";
+
+        const codeEl = document.getElementById('cm-code');
+        const copyBtn = document.getElementById('cm-copy');
         document.getElementById('code-overlay').classList.add('show');
+
+        // 안 푼 문제 → 코드 잠금 (조회 자체를 안 함; 규칙으로도 차단됨)
+        if (!mySolved.has(s.problemId)) {
+            codeEl.classList.add('cm-locked');
+            codeEl.textContent = "🔒 해결한 문제의 코드만 열람할 수 있어요.";
+            copyBtn.style.display = "none";
+            return;
+        }
+
+        // 푼 문제 → 서브문서에서 코드 로드 (구버전 기록은 메타 문서의 code 필드로 폴백)
+        codeEl.classList.remove('cm-locked');
+        copyBtn.style.display = "none";
+        codeEl.textContent = "코드 불러오는 중...";
+        const reqId = ++codeReqId;
+        try {
+            let code = null;
+            const cs = await getDoc(doc(db, "submissions", s._id, "private", "code"));
+            if (cs.exists()) code = cs.data().code;
+            else if (s.code != null) code = s.code;
+            if (reqId !== codeReqId) return;   // 그새 다른 기록을 열었으면 무시
+            const has = code != null && code !== "";
+            codeEl.textContent = has ? code : "(코드 없음)";
+            copyBtn.style.display = has ? "" : "none";
+        } catch(e) {
+            if (reqId !== codeReqId) return;
+            codeEl.textContent = "코드 로드 실패: " + e.message;
+        }
     }
     function closeCode() { document.getElementById('code-overlay').classList.remove('show'); }
 
@@ -259,7 +291,16 @@
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCode(); });
 
-    onAuthStateChanged(auth, user => { myUid = user ? user.uid : null; });
+    onAuthStateChanged(auth, async user => {
+        myUid = user ? user.uid : null;
+        mySolved = new Set();
+        if (user) {
+            try {
+                const snap = await getDoc(doc(db, "users", user.uid));
+                if (snap.exists()) (snap.data().solvedProblems || []).forEach(id => mySolved.add(String(id)));
+            } catch(e) { console.error("풀이 목록 로드 실패:", e); }
+        }
+    });
 
     async function load() {
         try {
@@ -268,7 +309,7 @@
             allSubs = [];
             snap.forEach(d => {
                 const x = d.data();
-                x.codeLength = new TextEncoder().encode(x.code || "").length;  // UTF-8 바이트(과거 기록도 일관 표시)
+                x._id = d.id;   // 코드 서브문서 조회용
                 allSubs.push(x);
             });
             document.getElementById('loading').style.display = "none";

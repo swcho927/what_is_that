@@ -113,23 +113,29 @@ users/{uid}/
     joinedAt: timestamp
     solvedProblems: ["1000", "1001", ...]   // 맞은 문제 ID 배열
 
-submissions/{autoId}/                       // 제출 기록 (judge.js recordSubmission)
+submissions/{autoId}/                       // 제출 메타데이터 (공개, 코드 제외)
     uid, nickname
     problemId, problemTitle
     verdict: "AC"|"WA"|"TLE"|"MLE"|"RE"
     success: boolean
     timeMs: number          // 테스트케이스 중 최대 실행 시간(ms)
     memBytes: number        // 최대 메모리(byte, memory.size*8)
-    codeLength: number
-    code: string            // 제출 코드 원문 (기록 클릭 시 표시)
+    codeLength: number      // UTF-8 byte
     submittedAt: serverTimestamp
+
+    private/code/                           // 제출 코드 (서브문서, 읽기 제한)
+        code: string        // 제출 코드 원문
+        problemId, uid      // 규칙 평가용
 ```
 
 레이팅 = solvedProblems 각 문제 티어 점수 합산.
 
 제출 기록은 채점 성공/실패 모두 저장됨. `submissions.html`에서 전체/내 기록 토글 + 사용시간/코드길이/제출시간 정렬 + 행 클릭 시 코드 모달.
 
-> **Firestore 규칙 필수**: `submissions` 컬렉션 read/create 규칙을 콘솔에 추가해야 동작함. 저장소 루트 `firestore.rules` 참고해서 Firebase 콘솔 → Firestore → 규칙에 붙여넣을 것.
+**코드 열람 제한**: 코드는 `submissions/{id}/private/code` 서브문서로 분리. 보안 규칙이 "읽는 사람의 `solvedProblems`에 그 문제가 있을 때만" 읽기 허용 → 안 푼 문제 코드는 네트워크로도 안 내려옴. `openCode()`가 푼 경우에만 서브문서를 조회(구버전 기록은 메타 문서의 `code` 필드로 폴백). 안 푼 경우 "🔒 해결한 문제의 코드만 열람할 수 있어요." 표시.
+
+> **Firestore 규칙 필수**: `submissions`(메타) + `submissions/{id}/private/{d}`(코드) 규칙을 콘솔에 게시해야 동작함. 저장소 루트 `firestore.rules` 참고.
+> ⚠️ 구버전 제출(메타 문서에 `code` 필드 포함)은 여전히 공개 노출됨 — 완전 정리하려면 마이그레이션 필요(단, 규칙상 본인 제출만 서브문서 생성 가능해서 타인 것 일괄 이전은 불가).
 
 ## 7. 티어 시스템
 

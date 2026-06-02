@@ -8,14 +8,6 @@
     <script type="module" src="navbar.js"></script>
     <script>
         window.PROBLEMS = {};
-        function showAddProblemPopup() {
-            document.getElementById('addProblemOverlay').style.display = 'block';
-            document.getElementById('addProblemPopup').style.display  = 'block';
-        }
-        function hideAddProblemPopup() {
-            document.getElementById('addProblemOverlay').style.display = 'none';
-            document.getElementById('addProblemPopup').style.display  = 'none';
-        }
     </script>
 </head>
 <body>
@@ -26,7 +18,7 @@
     <nav class="sidebar">
         <div class="sidebar-label">문제 목록</div>
         <div id="sidebar-list"></div>
-        <div class="sidebar-add-btn" onclick="showAddProblemPopup()">
+        <div class="sidebar-add-btn" onclick="window.open('https://app.notion.com/p/ulcheok/44ff942e3beb4f6194c0e04d4441d341?v=add9312503d740b1b8783fbfaef904c9&source=copy_link', '_blank')">
             <span>+ 문제 추가</span>
         </div>
     </nav>
@@ -46,17 +38,6 @@
 
 <script type="module" src="judge.js"></script>
 
-<div class="popup-overlay" id="addProblemOverlay" onclick="hideAddProblemPopup()" style="display:none;"></div>
-<div class="popup" id="addProblemPopup" style="display:none;">
-    <h2 class="popup-title">문제 추가</h2>
-    <div class="popup-body" style="max-height:400px; overflow-y:auto; font-size:0.85rem; line-height:1.6;">
-        그 뭐냐 Judge는 현재 서버 없이 운영되고 있어 Gmail을 통해 문제 추가를 요청할 수 있습니다.
-        주어진 양식에 맞춰 <a href="https://mail.google.com/mail/?view=cm&fs=1&to=swcho927@gmail.com" target="_blank">swcho927@gmail.com</a>으로 메일을 보내주시면 문제 검토 후 추가하도록 하겠습니다.<br><br>
-        <strong>[양식]</strong><br>문제 제목 / 시간·메모리 제한 / 난이도 / 문제 내용 / 입력 형식 / 출력 형식 / 예제<br><br>
-        <strong>[예시]</strong><br>두 정수를 입력 받아 합을 구하는 브론즈 V 난이도의 A+B 문제 등
-    </div>
-    <button class="popup-confirm-btn" onclick="hideAddProblemPopup()" style="margin-top:15px;">확인</button>
-</div>
 
 </body>
 </html>

@@ -506,6 +506,9 @@ function switchProblem(probId) {
 function tierClass(tier) { return tier ? "tier-" + tier.name.toLowerCase() : ""; }
 function tierLabel(tier) { return tier ? tier.name + " " + tier.level : ""; }
 
+// 문제 설명: 소스의 줄바꿈을 그대로 화면 줄바꿈으로 (문제 글을 실제 글처럼 작성)
+function nl2br(s) { return String(s || '').replace(/\n/g, '<br>'); }
+
 window.submitCode       = submitCode;
 window.submitCodePython = submitCodePython;
 window.switchProblem    = switchProblem;
@@ -558,11 +561,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr></tbody>
                 </table>
                 <div class="section-title">문제</div>
-                <div class="content-box">${prob.description || ''}</div>
+                <div class="content-box">${nl2br(prob.description)}</div>
                 <div class="section-title">입력</div>
-                <div class="content-box">${prob.inputDesc || ''}</div>
+                <div class="content-box">${nl2br(prob.inputDesc)}</div>
                 <div class="section-title">출력</div>
-                <div class="content-box">${prob.outputDesc || ''}</div>
+                <div class="content-box">${nl2br(prob.outputDesc)}</div>
                 ${prob.examples ? buildExamples(prob.examples) : ''}
                 <div class="submit-section">
                     <div class="submit-header">

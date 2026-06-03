@@ -86,6 +86,7 @@ submissions/{id}/   uid, nickname, problemId, problemTitle, verdict, success,
 2. `judge.html`에 `<script src="problems/번호.js"></script>` 추가
 3. 정답은 **하드코딩 금지** — `solve()` 함수로 자동 계산. 시드 고정 랜덤으로 테스트케이스 생성
 4. 입력은 **공백 구분** (`"1 2"`), 줄바꿈 구분 아님
+5. `description`/`inputDesc`/`outputDesc`는 **백틱(`` ` ``) 템플릿 리터럴 + 실제 줄바꿈**으로 작성 (소스 줄바꿈 = 화면 줄바꿈). `<br>` 쓰지 말 것 — 렌더러가 `\n`을 `<br>`로 변환(`nl2br`). 여러 줄일 때 이어지는 줄은 들여쓰기 없이 **0열부터** 써야 앞 공백이 안 붙음. 문단 구분은 빈 줄
 
 ```javascript
 (function () {
@@ -96,7 +97,11 @@ submissions/{id}/   uid, nickname, problemId, problemTitle, verdict, success,
     window.PROBLEMS['번호'] = {
         id: 번호, title: "...", timeLimit: 1, memoryLimit: 256,
         tier: { name: "Bronze", level: "V" },
-        description: "...", inputDesc: "...", outputDesc: "...",
+        description: `첫 줄.
+이어지는 줄은 0열부터.
+
+빈 줄로 문단 구분.`,
+        inputDesc: `...`, outputDesc: `...`,
         examples: [{ input: "...", output: "..." }],
         testCases: testCases,
         // specialJudge: function(output, expected) { }  // 필요 시

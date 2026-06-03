@@ -61,9 +61,9 @@
 
         tier: { name: "Bronze", level: "V" },
 
-        description: "두 정수를 입력 받아 두 수의 차를 출력하시오.",
-        inputDesc:   "첫째 줄에 A, B가 공백으로 구분하여 주어진다. (1 ≤ A, B ≤ 10,000)",
-        outputDesc:  "첫째 줄에 A - B의 값을 출력한다.",
+        description: `두 정수를 입력 받아 두 수의 차를 출력하시오.`,
+        inputDesc:   `첫째 줄에 A, B가 공백으로 구분하여 주어진다. (1 ≤ A, B ≤ 10,000)`,
+        outputDesc:  `첫째 줄에 A - B의 값을 출력한다.`,
 
         examples: [
             { input: "3 2", output: "1" },

@@ -126,7 +126,7 @@
 
     window.PROBLEMS['3000'] = {
 
-        id:          3000,
+        id:          "3000",
         title:       "정렬",
         timeLimit:   2,
         memoryLimit: 256,

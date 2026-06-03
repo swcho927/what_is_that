@@ -147,8 +147,8 @@
         add(n + "\n" + arr.join(' '));
     });
 
-    window.PROBLEMS['1991'] = {
-        id:          1991,
+    window.PROBLEMS['U1991'] = {
+        id:          "U1991",
         title:       "Stalin Sort",
         timeLimit:   1,
         memoryLimit: 256,

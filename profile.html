@@ -95,6 +95,7 @@
 
 <script type="module">
     import { app }                                             from './firebase.js';
+    import { normId, compareProbId }                           from './idalias.js';
     import { getAuth, onAuthStateChanged }                     from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import { getFirestore, doc, getDoc }                       from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
@@ -160,7 +161,7 @@
 
             const data     = snap.data();
             const nickname = data.nickname || data.email || "익명";
-            const solved   = data.solvedProblems || [];
+            const solved   = [...new Set((data.solvedProblems || []).map(normId))];  // 옛 번호 → 새 번호
 
             await Promise.all(solved.map(loadScript));
 
@@ -197,7 +198,7 @@
             if (solved.length === 0) {
                 solvedList.innerHTML = '<div class="solved-empty">아직 푼 문제가 없어요.</div>';
             } else {
-                [...solved].sort((a, b) => parseInt(a) - parseInt(b)).forEach(id => {
+                [...solved].sort(compareProbId).forEach(id => {
                     const p     = window.PROBLEMS?.[id];
                     const color = p?.tier ? getTierColor(p.tier) : '#8b949e';
                     const tier  = p?.tier ? `${p.tier.name} ${p.tier.level}` : '?';

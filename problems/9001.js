@@ -133,7 +133,7 @@
 
 
     window.PROBLEMS['9001'] = {
-        id:          9001,
+        id:          "9001",
         title:       "파도의 만가",
         timeLimit:   1,
         memoryLimit: 256,

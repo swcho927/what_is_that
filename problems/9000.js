@@ -152,7 +152,7 @@
 
     window.PROBLEMS['9000'] = {
 
-        id:          9000,
+        id:          "9000",
         title:       "한로로와 싸이",
         timeLimit:   1,
         memoryLimit: 256,

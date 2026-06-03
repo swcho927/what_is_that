@@ -93,13 +93,13 @@
 
 | 파일 | 제목 | 티어 | judge.html 등록 |
 |---|---|---|---|
-| 0523 | 십자인대 | Gold V | ✅ |
+| U0523 | 십자인대 | Gold V | ✅ |
 | 1000 | A+B | Bronze V | ✅ |
 | 1001 | A−B | Bronze V | ✅ |
 | 1002 | A×B | Bronze V | ✅ |
 | 1003 | A÷B | Silver IV | ✅ |
 | 1006 | 피보나치 수 | Silver V | ✅ |
-| 1991 | Stalin Sort | Bronze II | ✅ |
+| U1991 | Stalin Sort | Bronze II | ✅ |
 | 2000 | 정렬 | Silver I | ✅ |
 | 3000 | 정렬 | Platinum V | ✅ |
 | 9000 | 한로로와 싸이 | Silver IV | ❌ 미등록 |

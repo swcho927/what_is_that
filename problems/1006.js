@@ -1,6 +1,6 @@
 window.PROBLEMS['1006'] = {
 
-    id:          1006,
+    id:          "1006",
     title:       "피보나치 수",
     timeLimit:   1,
     memoryLimit: 256,

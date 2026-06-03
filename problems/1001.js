@@ -54,7 +54,7 @@
 
     window.PROBLEMS['1001'] = {
 
-        id:          1001,
+        id:          "1001",
         title:       "A-B",
         timeLimit:   1,
         memoryLimit: 256,

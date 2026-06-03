@@ -47,6 +47,7 @@
 
 <script type="module">
     import { app }                                               from './firebase.js';
+    import { normId }                                            from './idalias.js';
     import { getFirestore, collection, getDocs }                 from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
     const db = getFirestore(app);
@@ -92,12 +93,12 @@
             const users = [];
 
             const allSolved = new Set();
-            snap.forEach(d => (d.data().solvedProblems || []).forEach(id => allSolved.add(id)));
+            snap.forEach(d => (d.data().solvedProblems || []).forEach(id => allSolved.add(normId(id))));
             await Promise.all([...allSolved].map(loadScript));
 
             snap.forEach(d => {
                 const data   = d.data();
-                const solved = data.solvedProblems || [];
+                const solved = [...new Set((data.solvedProblems || []).map(normId))];  // 옛 번호 → 새 번호
                 const rating = solved.reduce((sum, id) => {
                     const p = window.PROBLEMS?.[id];
                     return sum + (p?.tier ? (REWARDS[`${p.tier.name} ${p.tier.level}`] || 0) : 0);

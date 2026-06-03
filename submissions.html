@@ -98,6 +98,7 @@
 
 <script type="module">
     import { app }                                                          from './firebase.js';
+    import { normId }                                                       from './idalias.js';
     import { getAuth, onAuthStateChanged }                                  from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, orderBy, limit, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
@@ -304,7 +305,7 @@
         if (user) {
             try {
                 const snap = await getDoc(doc(db, "users", user.uid));
-                if (snap.exists()) (snap.data().solvedProblems || []).forEach(id => mySolved.add(String(id)));
+                if (snap.exists()) (snap.data().solvedProblems || []).forEach(id => mySolved.add(normId(id)));
             } catch(e) { console.error("풀이 목록 로드 실패:", e); }
         }
     });
@@ -316,7 +317,8 @@
             allSubs = [];
             snap.forEach(d => {
                 const x = d.data();
-                x._id = d.id;   // 코드 서브문서 조회용
+                x._id = d.id;                       // 코드 서브문서 조회용
+                x.problemId = normId(x.problemId);  // 옛 번호 → 새 번호 (문제별 필터 매칭)
                 allSubs.push(x);
             });
             document.getElementById('loading').style.display = "none";

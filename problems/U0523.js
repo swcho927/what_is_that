@@ -1,4 +1,4 @@
-//  problems/0523.js  ─  얼척이를 잡아라 (그뭐냐 언어)
+//  problems/U0523.js  ─  얼척이를 잡아라 (그뭐냐 언어)
 //
 //  BFS + 점프 조건
 //  1 ≤ N, M ≤ 100
@@ -219,9 +219,9 @@
         return parseInt(pa[0]) * parseInt(pa[1]) - parseInt(pb[0]) * parseInt(pb[1]);
     });
 
-    window.PROBLEMS['0523'] = {
+    window.PROBLEMS['U0523'] = {
 
-        id:          "0523",
+        id:          "U0523",
         title:       "십자인대",
         timeLimit:   1,
         memoryLimit: 256,

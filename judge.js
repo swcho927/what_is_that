@@ -1,4 +1,5 @@
 import { app }            from './firebase.js';
+import { normId, compareProbId } from './idalias.js';
 import { getAuth, onAuthStateChanged }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, addDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
@@ -12,7 +13,7 @@ onAuthStateChanged(auth, async (user) => {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (!snap.exists()) return;
         (snap.data().solvedProblems || []).forEach(id => {
-            const el = document.getElementById(`solved-marker-${id}`);
+            const el = document.getElementById(`solved-marker-${normId(id)}`);
             if (el) el.style.display = 'inline-block';
         });
     } catch(e) { console.error("풀이 목록 로드 실패:", e); }
@@ -533,7 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const targetProb = new URLSearchParams(location.search).get('prob');
 
-    Object.keys(window.PROBLEMS).sort((a, b) => parseInt(a) - parseInt(b)).forEach((probId, idx) => {
+    Object.keys(window.PROBLEMS).sort(compareProbId).forEach((probId, idx) => {
         const prob  = window.PROBLEMS[probId];
         const tc    = tierClass(prob.tier);
         const tl    = tierLabel(prob.tier);

@@ -118,9 +118,9 @@ submissions/{id}/   uid, nickname, problemId, problemTitle, verdict, success,
 - 문제 번호(`id`·`PROBLEMS` 키)는 **문자열**. 숫자(`"1000"`)도, 문자 접두사(`"U0523"`)도 가능
 - 정렬: `compareProbId` — **숫자 전용이 먼저(숫자순), 문자 포함이 뒤(자연순)**. 예) `1000, 2000, U0523, U1991`
 - 번호 변경 시 4곳: ① `problems/파일.js`의 `PROBLEMS['키']`·`id` ② 파일명 ③ `judge.html` `<script>` ④ — 끝
-- **기존 Firestore 기록 호환**: 번호를 바꾸면 옛 기록(`solvedProblems`, `submissions.problemId`)은 옛 번호 그대로다. `idalias.js`의 `ID_ALIAS`에 `"옛번호":"새번호"` 추가 → 읽을 때 `normId`로 변환해 풀이/랭킹/제출현황/성공표시가 계속 매칭됨 (DB 마이그레이션 불필요)
+- **기존 Firestore 기록 호환(선택)**: 번호를 바꿨는데 DB를 마이그레이션 안 했다면, `idalias.js`의 `ID_ALIAS`에 `"옛번호":"새번호"` 추가 → 읽을 때 `normId`로 변환해 풀이/랭킹/제출현황/성공표시가 계속 매칭됨
   - 적용 위치: judge.js(성공 마커), ranking.html·profile.html(레이팅·풀이목록), submissions.html(문제 필터·코드 게이팅)
-  - 현재 별칭: `0523→U0523`, `1991→U1991`
+  - **현재: `ID_ALIAS = {}` (Firestore를 새 번호로 직접 마이그레이션 완료 → 별칭 불필요)**. 마이그레이션 시 3곳 일관 변경: `users.solvedProblems`, `submissions.problemId`, `submissions/{id}/private/code.problemId`
 
 ## 주의사항
 

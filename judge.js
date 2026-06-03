@@ -170,7 +170,16 @@ function precompile(code) {
 function runCode(code, input, timeLimitMs, memLimitMB) {
     memory = new Map();
     pc = 0;
-    let out = "", inputTokens = input.trim().split(/[\n\s]+/).filter(Boolean), inputIndex = 0;
+    input = String(input).replace(/\r\n?/g, "\n");   // 개행 정규화
+    let out = "", inputPos = 0;
+    // 숫자(뭐지): 공백 구분 토큰 / 문자(진짜뭐지): 공백·엔터 포함 한 글자씩 — 커서 공유
+    const readNum = () => {
+        while (inputPos < input.length && /\s/.test(input[inputPos])) inputPos++;
+        const start = inputPos;
+        while (inputPos < input.length && !/\s/.test(input[inputPos])) inputPos++;
+        return parseInt(input.slice(start, inputPos)) || 0;
+    };
+    const readChar = () => (inputPos < input.length ? input.charCodeAt(inputPos++) : 0);
     const compiled = precompile(code), len = compiled.length;
     const memLimit = memLimitMB * 1024 * 1024, startTime = Date.now();
     let peakMem = 0;
@@ -188,9 +197,9 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
             if (line) {
                 const { cmdVal, leftToks, rightToks } = line;
                 if      (cmdVal === '뭐더라')  { memory.set(resolveAddrFromTokens(leftToks), getValFromTokens(rightToks)); }
-                else if (cmdVal === '진짜뭐지') { const addr = resolveAddrFromTokens(leftToks); const val = inputTokens[inputIndex++] ?? ""; memory.set(addr, val.length > 0 ? val.charCodeAt(0) : 0); }
+                else if (cmdVal === '진짜뭐지') { memory.set(resolveAddrFromTokens(leftToks), readChar()); }
                 else if (cmdVal === '진짜뭐냐') { out += String.fromCharCode(getValFromTokens(leftToks)); }
-                else if (cmdVal === '뭐지')    { memory.set(resolveAddrFromTokens(leftToks), parseInt(inputTokens[inputIndex++] ?? "0") || 0); }
+                else if (cmdVal === '뭐지')    { memory.set(resolveAddrFromTokens(leftToks), readNum()); }
                 else if (cmdVal === '뭐냐')    { out += String(getValFromTokens(leftToks)); }
                 else if (cmdVal === '있잖아')  { pc += getValFromTokens(leftToks); jumped = true; }
             }

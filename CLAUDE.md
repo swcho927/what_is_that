@@ -43,6 +43,7 @@ problems/번호.js  문제별 solver + 테스트케이스
   - `verdict`: `"AC"` | `"TLE"` | `"MLE"` | `"RE: ..."`
   - `time`: `Date.now()` 기반 ms (1ms 미만이면 0으로 찍힘 — 측정 한계)
   - `mem`: **사용한 메모리 칸 수 × 8 byte** (실제 RAM 아님, 인터프리터 자체 지표). MLE 판정도 이 기준
+  - 입력: `뭐지`(숫자)와 `진짜뭐지`(문자)가 커서(`inputPos`) 공유. 숫자는 공백 구분 토큰, **문자는 공백·엔터 포함 raw 한 글자씩** 읽음
 - 채점: `submitCode(probId)` 루프 + 프로그레스 바, TLE/MLE/RE/AC 판정, specialJudge(오차 허용) 지원
   - 모든 테스트케이스의 최대 time·mem을 모아 채점 후 `recordSubmission()`으로 제출 기록 저장(성공/실패 모두)
 - 관리자 Python 검증 모드(Pyodide) — 암호 입력 시 활성화 (이 모드는 제출 기록 저장 안 함)

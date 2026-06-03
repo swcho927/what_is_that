@@ -220,18 +220,25 @@
             return;
         }
 
-        // 푼 문제 → 서브문서에서 코드 로드 (구버전 기록은 메타 문서의 code 필드로 폴백)
         codeEl.classList.remove('cm-locked');
+
+        // 구버전 기록: 코드가 메타 문서에 이미 들어있음 → 서브문서 조회 불필요
+        if (s.code != null) {
+            const has = s.code !== "";
+            codeEl.textContent = has ? s.code : "(코드 없음)";
+            copyBtn.style.display = has ? "" : "none";
+            return;
+        }
+
+        // 신버전 기록: 코드 서브문서에서 로드
         copyBtn.style.display = "none";
         codeEl.textContent = "코드 불러오는 중...";
         const reqId = ++codeReqId;
         try {
-            let code = null;
             const cs = await getDoc(doc(db, "submissions", s._id, "private", "code"));
-            if (cs.exists()) code = cs.data().code;
-            else if (s.code != null) code = s.code;
             if (reqId !== codeReqId) return;   // 그새 다른 기록을 열었으면 무시
-            const has = code != null && code !== "";
+            const code = cs.exists() ? cs.data().code : null;
+            const has  = code != null && code !== "";
             codeEl.textContent = has ? code : "(코드 없음)";
             copyBtn.style.display = has ? "" : "none";
         } catch(e) {

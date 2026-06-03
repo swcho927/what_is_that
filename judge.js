@@ -338,6 +338,9 @@ function resetBtn(els) {
 // ════════════════════════════════════════════════════════
 //  5. 그뭐냐 채점
 // ════════════════════════════════════════════════════════
+const SUBMIT_COOLDOWN_MS = 10000;   // 제출 쿨다운 (10초에 한 번)
+let lastSubmitAt = 0;
+
 async function submitCode(probId) {
     if (isJudging) return;
     const prob = window.PROBLEMS[probId];
@@ -346,6 +349,13 @@ async function submitCode(probId) {
     if (!code) { alert("코드를 입력해주세요."); return; }
 
     if (await hashPassword(code) === ADMIN_HASH) { activatePythonMode(probId); return; }
+
+    const sinceLast = Date.now() - lastSubmitAt;
+    if (sinceLast < SUBMIT_COOLDOWN_MS) {
+        alert(`제출은 10초에 한 번만 가능합니다. ${Math.ceil((SUBMIT_COOLDOWN_MS - sinceLast) / 1000)}초 후 다시 시도해주세요.`);
+        return;
+    }
+    lastSubmitAt = Date.now();
 
     const tcs = sortTestCases(prob.testCases);
     const els = getEls(probId);

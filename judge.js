@@ -202,14 +202,17 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
     pc = 0;
     input = String(input).replace(/\r\n?/g, "\n");   // 개행 정규화
     let out = "", inputPos = 0;
-    // 숫자(뭐지): 공백 구분 토큰 / 문자(진짜뭐지): 공백·엔터 포함 한 글자씩 — 커서 공유
+    // 숫자(뭐지): 공백·엔터 모두 건너뜀 / 문자(진짜뭐지): 엔터만 건너뜀, 공백은 읽음 — 커서 공유
     const readNum = () => {
         while (inputPos < input.length && /\s/.test(input[inputPos])) inputPos++;
         const start = inputPos;
         while (inputPos < input.length && !/\s/.test(input[inputPos])) inputPos++;
         return parseInt(input.slice(start, inputPos)) || 0;
     };
-    const readChar = () => (inputPos < input.length ? input.charCodeAt(inputPos++) : 0);
+    const readChar = () => {
+        while (inputPos < input.length && input[inputPos] === '\n') inputPos++;
+        return inputPos < input.length ? input.charCodeAt(inputPos++) : 0;
+    };
     const compiled = precompile(code), len = compiled.length;
     const memLimit = memLimitMB * 1024 * 1024, startTime = Date.now();
     let peakMem = 0;

@@ -108,7 +108,7 @@ firstSolves/{번호}/ problemId, problemTitle, nickname, uid, solvedAt          
 
 빈 줄로 문단 구분.`,
         inputDesc: `...`, outputDesc: `...`,
-        examples: [{ input: "...", output: "..." }],
+        examples: [{ input: "...", output: "..." }, { input: "...", output: "..." }],  // Bronze/Silver: 2개, Gold+: 자유
         testCases: testCases,
         // specialJudge: function(output, expected) { }  // 필요 시
     };

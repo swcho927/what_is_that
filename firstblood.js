@@ -6,9 +6,11 @@
 // 이후 발생分만 알림.
 
 import { app } from './firebase.js';
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import { getFirestore, collection, query, orderBy, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
-const db = getFirestore(app);
+const auth = getAuth(app);
+const db   = getFirestore(app);
 const SEEN_KEY = 'firstSolveSeen';
 
 function getSeen() {
@@ -108,4 +110,5 @@ async function start() {
     }, err => console.error("firstSolves 구독 실패:", err));
 }
 
-start();
+// 로그인한 사람에게만 팝업 표시
+onAuthStateChanged(auth, user => { if (user) start(); });

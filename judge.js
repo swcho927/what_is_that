@@ -26,16 +26,11 @@ async function awardRating(prob) {
     try {
         const ref  = doc(db, "users", user.uid);
         const snap = await getDoc(ref);
-        if (snap.exists() && (snap.data().solvedProblems || []).includes(String(prob.id))) return;
-        await updateDoc(ref, { solvedProblems: arrayUnion(String(prob.id)) });
-        const el = document.getElementById(`solved-marker-${prob.id}`);
-        if (el) el.style.display = 'inline-block';
 
-        // 최초 해결 판정
-        // firstSolves/{번호}가 이미 있으면 → 이미 처리됨, 끝
-        // 없으면 → users에서 "나 말고 푼 사람" 조회
-        //   진짜 첫 해결: nickname 포함 생성 → 모두에게 팝업
-        //   이미 남들이 풀었던 문제: nickname:null 로 생성 → 팝업 없음, 이후부터 fast path
+        // firstSolves 체크 — early return 전에 실행해서 이미 푼 문제도 캐시 채움
+        // firstSolves/{번호} 없으면: array-contains로 "나 말고 푼 사람" 확인
+        //   진짜 첫 해결 → nickname 포함 저장 (팝업)
+        //   이미 풀린 문제  → nickname:null 저장 (팝업 없음, 이후 fast path)
         try {
             const fsRef = doc(db, "firstSolves", String(prob.id));
             if (!(await getDoc(fsRef)).exists()) {
@@ -43,7 +38,6 @@ async function awardRating(prob) {
                     where("solvedProblems", "array-contains", String(prob.id))));
                 const someoneElse = solvers.docs.some(d => d.id !== user.uid);
                 if (!someoneElse) {
-                    // 진짜 첫 해결 → 닉네임 포함 저장 (firstblood.js가 팝업 띄움)
                     await setDoc(fsRef, {
                         problemId:    String(prob.id),
                         problemTitle: prob.title || "",
@@ -52,17 +46,23 @@ async function awardRating(prob) {
                         solvedAt:     serverTimestamp()
                     });
                 } else {
-                    // 이미 다른 사람이 풀었던 문제 → nickname:null 로 캐시만 (팝업 없음)
+                    // uid:null은 보안 규칙에 걸리므로 현재 유저 uid 사용
                     await setDoc(fsRef, {
                         problemId:    String(prob.id),
                         problemTitle: prob.title || "",
                         nickname:     null,
-                        uid:          null,
+                        uid:          user.uid,
                         solvedAt:     serverTimestamp()
                     });
                 }
             }
         } catch(_) {}
+
+        // 이미 푼 문제면 solvedProblems 갱신 없이 종료
+        if (snap.exists() && (snap.data().solvedProblems || []).includes(String(prob.id))) return;
+        await updateDoc(ref, { solvedProblems: arrayUnion(String(prob.id)) });
+        const el = document.getElementById(`solved-marker-${prob.id}`);
+        if (el) el.style.display = 'inline-block';
     } catch(e) { console.error("풀이 기록 실패:", e); }
 }
 

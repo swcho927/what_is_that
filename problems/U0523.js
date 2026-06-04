@@ -205,8 +205,8 @@
         add(randGrid(rng, N, M, randInt(rng, 15, 45)));
     }
 
-    // ── 랜덤 대규모 (50×50 ~ 100×100): 10개 ────
-    for (let seed = 40; seed < 50; seed++) {
+    // ── 랜덤 대규모 (50×50 ~ 100×100): 14개 ────
+    for (let seed = 40; seed < 54; seed++) {
         const rng = makeRng(seed);
         const N = randInt(rng, 50, 100), M = randInt(rng, 50, 100);
         add(randGrid(rng, N, M, randInt(rng, 20, 50)));

@@ -52,7 +52,15 @@ function wrap() {
 const queue = [];
 let showing = false;
 
-function enqueue(ev) { queue.push(ev); if (!showing) showNext(); }
+function enqueue(ev) {
+    queue.push(ev);
+    if (!showing && !document.hidden) showNext();
+}
+
+// 탭이 다시 활성화될 때 대기 중인 팝업 표시
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && queue.length && !showing) showNext();
+});
 
 function showNext() {
     if (!queue.length) { showing = false; return; }

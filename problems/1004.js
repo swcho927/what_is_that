@@ -46,7 +46,6 @@
     testCases.push(add(10000, 3));      // 1
 
     // ── b=1 (항상 0) ─────────────────────────────
-    testCases.push(add(1, 1));
     testCases.push(add(100, 1));
     testCases.push(add(9999, 1));
 
@@ -58,7 +57,7 @@
     testCases.push(add(9996, 4));
 
     // ── 시드 고정 랜덤 25개 ──────────────────────
-    for (var i = 1; i <= 25; i++) {
+    for (var i = 1; i <= 27; i++) {
         var rng = makeRng(i);
         var a   = randRange(rng, 1, 10000);
         var b   = randRange(rng, 1, 10000);
@@ -93,8 +92,7 @@
         outputDesc:  `첫째 줄에 A % B의 값을 출력한다.`,
 
         examples: [
-            { input: "7 3",     output: "1" },
-            { input: "10 10",   output: "0" },
+            { input: "8 3",     output: "2" },
             { input: "1 10000", output: "1" },
         ],
 

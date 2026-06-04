@@ -7,7 +7,7 @@
 
 import { app } from './firebase.js';
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-import { getFirestore, collection, query, orderBy, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
 const auth = getAuth(app);
 const db   = getFirestore(app);
@@ -84,29 +84,29 @@ function showNext() {
 function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
 // ── Firestore 구독 ─────────────────────────
-async function start() {
+function start() {
     const col = collection(db, "firstSolves");
+    // 첫 방문 여부: localStorage에 기록 없으면 초방문 → 기존 문서 전부 seen 처리(팝업 없음)
+    const isFirstEverVisit = localStorage.getItem(SEEN_KEY) === null;
+    let initialDone = false;
 
-    // 첫 방문(저장된 seen이 없음): 기존 기록을 "본 것"으로 처리하고 알림은 안 띄움
-    if (localStorage.getItem(SEEN_KEY) === null) {
-        try {
-            const snap = await getDocs(col);
-            snap.forEach(d => seen.add(d.id));
-            saveSeen(seen);
-        } catch (_) {}
-    }
-
-    // 실시간 구독: 새로 추가되는 문서(= 새 퍼스트) 중 안 본 것만 알림
+    // getDocs 별도 호출 없이 onSnapshot 하나로 처리 (네트워크 요청 1회 절약)
     onSnapshot(query(col, orderBy("solvedAt", "asc")), snap => {
         snap.docChanges().forEach(ch => {
             if (ch.type !== 'added') return;
             const id = ch.doc.id;
             if (seen.has(id)) return;
-            seen.add(id); saveSeen(seen);
+            seen.add(id);
+
+            // 초방문의 초기 스냅샷 → 모두 seen 처리만, 팝업 없음
+            if (isFirstEverVisit && !initialDone) return;
+
             const data = ch.doc.data();
-            if (!data.nickname) return;  // nickname:null = 이미 풀려 있던 문제 캐시, 팝업 생략
+            if (!data.nickname) return;   // nickname:null = 이미 풀린 문제 캐시
             enqueue({ id, ...data });
         });
+        saveSeen(seen);
+        initialDone = true;
     }, err => console.error("firstSolves 구독 실패:", err));
 }
 

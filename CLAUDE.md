@@ -48,6 +48,7 @@ problems/번호.js  문제별 solver + 테스트케이스
   - 입력: `뭐지`(숫자)와 `진짜뭐지`(문자)가 커서(`inputPos`) 공유. 숫자는 공백·엔터 모두 건너뜀, **문자는 엔터만 건너뜀·공백은 읽음** (숫자 뒤 개행 자동 스킵되므로 수동 처리 불필요)
 - 채점: `submitCode(probId)` 루프 + 프로그레스 바, TLE/MLE/RE/AC 판정, specialJudge(오차 허용) 지원
   - 모든 테스트케이스의 최대 time·mem을 모아 채점 후 `recordSubmission()`으로 제출 기록 저장(성공/실패 모두)
+  - **제출 쿨다운 10초**(`SUBMIT_COOLDOWN_MS`) — 연타 방지. 클라이언트 기준이라 새로고침하면 초기화(스팸 방지용)
 - 관리자 Python 검증 모드(Pyodide) — 암호 입력 시 활성화 (이 모드는 제출 기록 저장 안 함)
 - `DOMContentLoaded`에서 `PROBLEMS` 객체를 읽어 사이드바·문제 페이지 자동 생성
 - 문제 딥링크: `judge.html?prob=번호` 로 들어오면 해당 문제 탭 자동 활성화
@@ -74,7 +75,10 @@ submissions/{id}/   uid, nickname, problemId, problemTitle, verdict, success,
 firstSolves/{번호}/ problemId, problemTitle, nickname, uid, solvedAt          // 문제당 1개(최초 해결자)
 ```
 
-- **최초 해결 알림**: `awardRating`이 풀이 시 `users`에서 `array-contains`로 **나 외에 푼 사람이 없는지** 확인 → 진짜 첫 해결일 때만 `firstSolves/{번호}` 생성. (firstSolves 존재 여부만 보지 않으므로, 컬렉션이 비어 있어도 과거에 이미 풀린 문제는 오탐 안 함) `firstblood.js`가 `onSnapshot`으로 구독해 새 퍼스트가 생기면 모든 접속자에게 토스트 팝업. 각 사람당 한 번(localStorage `firstSolveSeen`), 첫 방문자는 과거분 무시·이후분만 표시
+- **최초 해결 알림** (firstblood.js):
+  - 기록(`awardRating`): 유저가 새로 푼 문제이고 `firstSolves/{번호}`가 없으면 → `users`에서 `array-contains`로 **나 외에 푼 사람** 확인 → 없으면 `nickname` 포함 저장(=진짜 첫 해결, 팝업 O), 있으면 `nickname:null` 저장(=이미 풀렸던 문제 캐시, 팝업 X). 이후엔 firstSolves 존재만 보면 됨(fast path)
+  - 표시: `onSnapshot` 구독해 새 퍼스트 생기면 상단 토스트 팝업(7초 자동/× 닫기). **로그인한 사람에게만**(`onAuthStateChanged` 후 구독). `nickname:null`이면 생략. 각 사람당 한 번(localStorage `firstSolveSeen`), 첫 방문자는 과거분 무시·이후분만. **백그라운드 탭이면 큐에 쌓고 탭 활성화 시 표시**
+  - 메인 5개 페이지(judge/index/ranking/profile/submissions)에 로드
 
 - 레이팅 = `solvedProblems` 각 문제 티어 점수 합산 (점수표는 handoff.md / ranking.html)
 - **규칙 게시 필수**: `firestore.rules` 내용을 Firebase 콘솔 → Firestore → 규칙에 붙여넣고 **게시**해야 제출 기록·코드 열람이 동작함. 코드만 푸시하면 적용 안 됨
@@ -99,7 +103,7 @@ firstSolves/{번호}/ problemId, problemTitle, nickname, uid, solvedAt          
     function solve(input) { /* 정답 계산 */ }
     var testCases = [];
     function add(input) { testCases.push({ in: input, out: solve(input) }); }
-    // 고정 케이스 + 경계값 + 시드 고정 랜덤 (브론즈 50 / 실버 50 / 골드+ 60개+)
+    // 작은값 + 경계값 + 극단값 + 특이케이스 + 시드 고정 랜덤 (아래 "테스트케이스 규칙" 참고)
     window.PROBLEMS['번호'] = {
         id: 번호, title: "...", timeLimit: 1, memoryLimit: 256,
         tier: { name: "Bronze", level: "V" },
@@ -116,6 +120,16 @@ firstSolves/{번호}/ problemId, problemTitle, nickname, uid, solvedAt          
 ```
 
 > 현재 문제 목록은 `problems/` 디렉터리와 `judge.html`의 `<script>` 등록 목록 참고.
+
+## 테스트케이스 규칙
+
+- **구성**: 작은 값 + 경계값 + 극단값 + 특이 케이스(공백/한글/대소문자 등) + **시드 고정 랜덤** (testcase.ac 식)
+- **정답 하드코딩 금지** — `solve()`로 자동 계산. 랜덤은 `makeRng(seed)`로 재현 가능하게
+- **개수**: 난이도 비례 — **Bronze 50 → Ruby 100** (대략 Bronze 50 / Silver 60 / Gold 70 / Platinum 80 / Diamond 90 / Ruby 100)
+- **정렬**: 배열 마지막에 **걸리는 시간(≈ 입력 크기) 오름차순** 정렬. (judge.js `sortTestCases`도 첫 토큰=N 기준 오름차순 재정렬함)
+- **중복 제거**: `in` 기준 dedup 후 목표 개수 맞추기
+- 예시(`examples`): **Bronze/Silver 2개**, Gold+ 자유
+- 검증: `node -e "global.window={PROBLEMS:{}}; eval(require('fs').readFileSync('problems/번호.js','utf8')); ..."` 로 개수·정답 확인
 
 ## 문제 번호 체계 / 별칭
 
@@ -142,6 +156,6 @@ firstSolves/{번호}/ problemId, problemTitle, nickname, uid, solvedAt          
 
 ## 알려진 이슈
 
-- `problems/9000.js`(한로로와 싸이)가 `judge.html`에 `<script>` 등록 안 됨 — 사이트에 안 보임. 의도된 건지 누락인지 확인 필요.
 - 구버전 제출 기록은 코드가 메타 문서에 남아 공개 노출됨. 규칙상 타인 제출의 코드를 서브문서로 일괄 이전할 수 없어 완전 정리는 어려움(콘솔에서 옛 테스트 제출 삭제가 가장 깔끔).
 - 코드 열람 차단 후 "푼 문제인데 코드 로드 실패" 시: 해당 유저의 `solvedProblems`에 문제 번호가 **문자열**로 있는지 확인 (매칭은 문자열 기준).
+- firstSolves는 일회용 `migrate.html`로 기존 풀린 문제를 `nickname:null`로 일괄 등록해 초기화함(현재 삭제됨). 새 문제를 추가하면 그 문제는 진짜 첫 해결자에게 팝업이 정상으로 뜸.

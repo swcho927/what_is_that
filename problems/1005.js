@@ -91,7 +91,6 @@
         examples: [
             { input: "1 2 3",   output: "9"   },
             { input: "2 3 4",   output: "20"  },
-            { input: "10000 10000 10000", output: "200000000" },
         ],
 
         testCases: testCases,

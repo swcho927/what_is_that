@@ -92,14 +92,14 @@ function showNext() {
 function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
 // ── Firestore 구독 ─────────────────────────
-function start() {
+function start() {  // onSnapshot unsubscribe 반환 (재로그인 시 정리용)
     const col = collection(db, "firstSolves");
     // 첫 방문 여부: localStorage에 기록 없으면 초방문 → 기존 문서 전부 seen 처리(팝업 없음)
     const isFirstEverVisit = localStorage.getItem(SEEN_KEY) === null;
     let initialDone = false;
 
     // getDocs 별도 호출 없이 onSnapshot 하나로 처리 (네트워크 요청 1회 절약)
-    onSnapshot(query(col, orderBy("solvedAt", "asc")), snap => {
+    return onSnapshot(query(col, orderBy("solvedAt", "asc")), snap => {
         snap.docChanges().forEach(ch => {
             if (ch.type !== 'added') return;
             const id = ch.doc.id;
@@ -119,4 +119,9 @@ function start() {
 }
 
 // 로그인한 사람에게만 팝업 표시
-onAuthStateChanged(auth, user => { if (user) start(); });
+// 로그아웃 → 재로그인 시 리스너 중복 방지
+let unsubscribeSnapshot = null;
+onAuthStateChanged(auth, user => {
+    if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+    if (user) unsubscribeSnapshot = start();
+});

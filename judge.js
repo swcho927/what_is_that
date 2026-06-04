@@ -1,7 +1,7 @@
 import { app }            from './firebase.js';
 import { normId, compareProbId } from './idalias.js';
 import { getAuth, onAuthStateChanged }                          from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, addDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, addDoc, setDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
 const auth = getAuth(app);
 const db   = getFirestore(app);
@@ -30,6 +30,39 @@ async function awardRating(prob) {
         await updateDoc(ref, { solvedProblems: arrayUnion(String(prob.id)) });
         const el = document.getElementById(`solved-marker-${prob.id}`);
         if (el) el.style.display = 'inline-block';
+
+        // 최초 해결 판정
+        // firstSolves/{번호}가 이미 있으면 → 이미 처리됨, 끝
+        // 없으면 → users에서 "나 말고 푼 사람" 조회
+        //   진짜 첫 해결: nickname 포함 생성 → 모두에게 팝업
+        //   이미 남들이 풀었던 문제: nickname:null 로 생성 → 팝업 없음, 이후부터 fast path
+        try {
+            const fsRef = doc(db, "firstSolves", String(prob.id));
+            if (!(await getDoc(fsRef)).exists()) {
+                const solvers = await getDocs(query(collection(db, "users"),
+                    where("solvedProblems", "array-contains", String(prob.id))));
+                const someoneElse = solvers.docs.some(d => d.id !== user.uid);
+                if (!someoneElse) {
+                    // 진짜 첫 해결 → 닉네임 포함 저장 (firstblood.js가 팝업 띄움)
+                    await setDoc(fsRef, {
+                        problemId:    String(prob.id),
+                        problemTitle: prob.title || "",
+                        nickname:     snap.data()?.nickname || user.displayName || user.email || "익명",
+                        uid:          user.uid,
+                        solvedAt:     serverTimestamp()
+                    });
+                } else {
+                    // 이미 다른 사람이 풀었던 문제 → nickname:null 로 캐시만 (팝업 없음)
+                    await setDoc(fsRef, {
+                        problemId:    String(prob.id),
+                        problemTitle: prob.title || "",
+                        nickname:     null,
+                        uid:          null,
+                        solvedAt:     serverTimestamp()
+                    });
+                }
+            }
+        } catch(_) {}
     } catch(e) { console.error("풀이 기록 실패:", e); }
 }
 

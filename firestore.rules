@@ -35,5 +35,13 @@ service cloud.firestore {
         allow update, delete: if false;
       }
     }
+
+    // 최초 해결(퍼스트) — 문제당 1개, 처음 푼 사람만 생성
+    match /firstSolves/{probId} {
+      allow read: if true;                                   // 모두에게 알림 표시
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.uid;
+      allow update, delete: if false;                        // 최초 1명만, 변경 불가
+    }
   }
 }

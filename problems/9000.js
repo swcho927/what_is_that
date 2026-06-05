@@ -2,7 +2,7 @@
 //  problems/9000.js  ─  한로로와 싸이 (그뭐냐 언어)
 //
 //  부분 수열 판별 (N에서 글자를 지워 M을 만들 수 있는가)
-//  제약: 1 ≤ dₘ ≤ dₙ ≤ 100, 한글/영문/숫자/공백
+//  제약: 1 ≤ dₘ ≤ dₙ ≤ 10,000, 한글/영문/숫자/공백
 //  Silver IV → 60개 (작은값 + 경계 + 극단 + 특이 + 시드 고정 랜덤)
 //  마지막에 걸리는 시간(≈ N 길이) 오름차순 정렬
 // ════════════════════════════════════════════════
@@ -113,28 +113,28 @@
     pairs.push(["Hello 한로로 World", "Hello World"]);
     pairs.push(["강남 Style 1234", "Style"]);
 
-    // ── 극단값 (dₙ=100, dₘ 경계) ────────────────────
-    pairs.push([rep("a", 100), rep("a", 100)]);                 // 최대 동일 (yes)
-    pairs.push([rep("a", 100), rep("a", 99)]);                  // 하나 제거 (yes)
-    pairs.push([rep("a", 100), "b"]);                           // dₘ=1 불가 (no)
-    pairs.push([rep("a", 100), "a"]);                           // dₘ=1 가능 (yes)
-    pairs.push([rep("ab", 50), rep("b", 50)]);                  // 격자 (yes)
-    pairs.push([rep("ab", 50), rep("a", 51)]);                  // 개수 부족 (no)
-    pairs.push([rep(" ", 100), rep(" ", 50)]);                  // 공백만 (yes)
-    pairs.push([rep(" ", 100), "a"]);                           // 공백만 (no)
-    pairs.push([rep("abcdefghij", 10), "abcdefghij"]);          // 반복 속 부분 (yes)
-    pairs.push([rep("abcdefghij", 10), rep("a", 11)]);          // 개수 부족 (no)
+    // ── 극단값 (dₙ=10000, dₘ 경계) ──────────────────
+    pairs.push([rep("a", 10000), rep("a", 10000)]);             // 최대 동일 (yes)
+    pairs.push([rep("a", 10000), rep("a", 9999)]);              // 하나 제거 (yes)
+    pairs.push([rep("a", 10000), "b"]);                         // dₘ=1 불가 (no)
+    pairs.push([rep("a", 10000), "a"]);                         // dₘ=1 가능 (yes)
+    pairs.push([rep("ab", 5000), rep("b", 5000)]);              // 격자 (yes)
+    pairs.push([rep("ab", 5000), rep("a", 5001)]);              // 개수 부족 (no)
+    pairs.push([rep(" ", 10000), rep(" ", 5000)]);              // 공백만 (yes)
+    pairs.push([rep(" ", 10000), "a"]);                         // 공백만 (no)
+    pairs.push([rep("abcdefghij", 1000), "abcdefghij"]);        // 반복 속 부분 (yes)
+    pairs.push([rep("abcdefghij", 1000), rep("a", 1001)]);      // 개수 부족 (no)
 
     // ── 시드 고정 랜덤 (yes 7 + 혼합 7) ─────────────
     for (var i = 1; i <= 7; i++) {
         var rngY = makeRng(1000 + i);
-        var lm = randRange(rngY, 1, 40);
-        var ln = randRange(rngY, lm, 100);
+        var lm = randRange(rngY, 1, 4000);
+        var ln = randRange(rngY, lm, 10000);
         pairs.push(makeYes(rngY, lm, ln));
     }
     for (var k = 1; k <= 7; k++) {
         var rngR = makeRng(2000 + k);
-        var ln2 = randRange(rngR, 1, 100);
+        var ln2 = randRange(rngR, 1, 10000);
         var lm2 = randRange(rngR, 1, ln2);
         pairs.push(makeRandPair(rngR, ln2, lm2));
     }
@@ -154,7 +154,7 @@
 
         id:          "9000",
         title:       "한로로와 싸이",
-        timeLimit:   1,
+        timeLimit:   2,
         memoryLimit: 256,
 
         tier: { name: "Silver", level: "IV" },
@@ -162,7 +162,7 @@
         description: `인천대학교 축제 현장, 가수 한로로가 무대에서 열정적인 공연을 펼치고 있었다. 그런데 갑자기 가수 싸이가 무대 위로 난입하면서 사건이 발생했다. 싸이의 엄청난 에너지 때문에 한로로의 곡 가사 중간중간에 싸이의 강렬한 추임새가 무작위로 끼어들어 가게 된 것이다! 인천대 축제에 가지 못해 방구석에서 아쉬워하던 얼척이는, 이 상황을 컴퓨터로 분석해 보기로 했다. 얼척이의 목표는 원래의 가사 문장과 추임새가 섞인 문장이 주어졌을 때, 섞인 문장에서 불필요한 문자열을 적절히 제거하여 원래의 가사를 복원할 수 있는지 판별하는 프로그램을 만드는 것이다.
 두 개의 문자열 N과 M이 주어졌을 때, 문자열 N에서 적절히 글자를 제거하여 문자열 M을 만들 수 있는지 판단하는 프로그램을 작성하시오. 단, 글자를 제거할 때 남아있는 문자들의 순서는 유지되어야 한다.`,
 
-        inputDesc: `첫째 줄에 문자열 N의 길이 dₙ, 문자열 M의 길이 dₘ이 주어진다. (1 ≤ dₘ ≤ dₙ ≤ 100)
+        inputDesc: `첫째 줄에 문자열 N의 길이 dₙ, 문자열 M의 길이 dₘ이 주어진다. (1 ≤ dₘ ≤ dₙ ≤ 10,000)
 둘째 줄에 추임새가 포함된 문자열 N이 주어진다.
 셋째 줄에 원래 가사 문자열 M이 주어진다.
 N과 M은 한글, 영문 대소문자, 숫자, 공백으로만 이루어져 있다.`,

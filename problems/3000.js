@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════
 //  problems/3000.js  ─  정렬 (그뭐냐 언어)
 //
-//  N ≤ 1000, 1 ≤ Ai ≤ 1,000,000
+//  N ≤ 10,000, 1 ≤ Ai ≤ 1,000,000
 //  Platinum V → 85개 (경계값 14 + 랜덤 71)
 // ════════════════════════════════════════════════
 (function () {
@@ -43,55 +43,55 @@
     testCases.push(makeCase([1000000, 999999]));
     testCases.push(makeCase([1, 1000000]));
 
-    // N=1000, 이미 정렬됨
+    // N=10000, 이미 정렬됨
     (function() {
-        var arr = []; for (var i = 1; i <= 1000; i++) arr.push(i);
+        var arr = []; for (var i = 1; i <= 10000; i++) arr.push(i);
         testCases.push(makeCase(arr));
     })();
 
-    // N=1000, 역순
+    // N=10000, 역순
     (function() {
-        var arr = []; for (var i = 1000; i >= 1; i--) arr.push(i);
+        var arr = []; for (var i = 10000; i >= 1; i--) arr.push(i);
         testCases.push(makeCase(arr));
     })();
 
-    // N=1000, 모두 같은 값
+    // N=10000, 모두 같은 값
     (function() {
-        var arr = []; for (var i = 0; i < 1000; i++) arr.push(42);
+        var arr = []; for (var i = 0; i < 10000; i++) arr.push(42);
         testCases.push(makeCase(arr));
     })();
 
-    // N=1000, 최솟값/최댓값 교차
+    // N=10000, 최솟값/최댓값 교차
     (function() {
         var arr = [];
-        for (var i = 0; i < 500; i++) arr.push(1);
-        for (var i = 0; i < 500; i++) arr.push(1000000);
+        for (var i = 0; i < 5000; i++) arr.push(1);
+        for (var i = 0; i < 5000; i++) arr.push(1000000);
         testCases.push(makeCase(arr));
     })();
 
-    // N=1000, 최솟값만
+    // N=10000, 최솟값만
     (function() {
-        var arr = []; for (var i = 0; i < 1000; i++) arr.push(1);
+        var arr = []; for (var i = 0; i < 10000; i++) arr.push(1);
         testCases.push(makeCase(arr));
     })();
 
-    // N=1000, 최댓값만
+    // N=10000, 최댓값만
     (function() {
-        var arr = []; for (var i = 0; i < 1000; i++) arr.push(1000000);
+        var arr = []; for (var i = 0; i < 10000; i++) arr.push(1000000);
         testCases.push(makeCase(arr));
     })();
 
-    // N=1000, 교대 패턴 (1, 1000000, 1, 1000000, ...)
-    (function() {
-        var arr = [];
-        for (var i = 0; i < 1000; i++) arr.push(i % 2 === 0 ? 1 : 1000000);
-        testCases.push(makeCase(arr));
-    })();
-
-    // N=1000, 중간값 근처 밀집
+    // N=10000, 교대 패턴 (1, 1000000, 1, 1000000, ...)
     (function() {
         var arr = [];
-        for (var i = 0; i < 1000; i++) arr.push(1000000 + (i % 3) - 1);
+        for (var i = 0; i < 10000; i++) arr.push(i % 2 === 0 ? 1 : 1000000);
+        testCases.push(makeCase(arr));
+    })();
+
+    // N=10000, 중간값 근처 밀집
+    (function() {
+        var arr = [];
+        for (var i = 0; i < 10000; i++) arr.push(1000000 + (i % 3) - 1);
         testCases.push(makeCase(arr));
     })();
 
@@ -106,19 +106,19 @@
         testCases.push(makeCase(arr));
     }
 
-    // 중규모 (N=51~300): 25개
+    // 중규모 (N=51~2000): 25개
     for (var seed = 21; seed <= 45; seed++) {
         var rng = makeRng(seed);
-        var n   = randRange(rng, 51, 300);
+        var n   = randRange(rng, 51, 2000);
         var arr = [];
         for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 1000000));
         testCases.push(makeCase(arr));
     }
 
-    // 대규모 (N=201~1000): 26개
+    // 대규모 (N=2001~10000): 26개
     for (var seed = 46; seed <= 71; seed++) {
         var rng = makeRng(seed);
-        var n   = randRange(rng, 201, 1000);
+        var n   = randRange(rng, 2001, 10000);
         var arr = [];
         for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 1000000));
         testCases.push(makeCase(arr));
@@ -134,7 +134,7 @@
         tier: { name: "Platinum", level: "V" },
 
         description: `N개의 정수가 주어졌을 때, 이를 오름차순으로 정렬하여 출력하시오.`,
-        inputDesc:   `첫째 줄에 N이 주어진다. (1 ≤ N ≤ 1000)
+        inputDesc:   `첫째 줄에 N이 주어진다. (1 ≤ N ≤ 10,000)
 둘째 줄에 N개의 정수 Aᵢ가 공백으로 구분하여 주어진다. (1 ≤ Aᵢ ≤ 1,000,000)`,
         outputDesc:  `첫째 줄에 오름차순으로 정렬한 결과를 공백으로 구분하여 출력한다.`,
 

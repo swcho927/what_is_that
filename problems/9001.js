@@ -100,27 +100,27 @@
         testCases.push(makeCase(arr));
     }
 
-    // ── large 랜덤 (N=5000~20000) ──
+    // ── large 랜덤 (N=20000~100000) ──
     for (var seed = 200; seed <= 219; seed++) {
         var rng = makeRng(seed);
-        var n = randRange(rng, 5000, 20000);
+        var n = randRange(rng, 20000, 100000);
         var arr = [];
         for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 100000));
         testCases.push(makeCase(arr));
     }
 
-    // ── N=20000 극단값 ──
-    testCases.push(makeCase(new Array(20000).fill(1)));
-    testCases.push(makeCase(Array.from({length: 20000}, (_, i) => i + 1)));
-    testCases.push(makeCase(Array.from({length: 20000}, (_, i) => 20000 - i)));
-    testCases.push(makeCase(Array.from({length: 20000}, (_, i) => i % 2 === 0 ? 1 : 2)));
-    testCases.push(makeCase(Array.from({length: 20000}, (_, i) => i % 2 === 0 ? 100000 : 1)));
+    // ── N=100000 극단값 ──
+    testCases.push(makeCase(new Array(100000).fill(1)));
+    testCases.push(makeCase(Array.from({length: 100000}, (_, i) => i + 1)));
+    testCases.push(makeCase(Array.from({length: 100000}, (_, i) => 100000 - i)));
+    testCases.push(makeCase(Array.from({length: 100000}, (_, i) => i % 2 === 0 ? 1 : 2)));
+    testCases.push(makeCase(Array.from({length: 100000}, (_, i) => i % 2 === 0 ? 100000 : 1)));
     // 앞부분 긴 만가 + 끊김 + 뒷부분 긴 만가, 가운데 하나 제거로 연결
     (function() {
         var arr = [];
-        for (var i = 0; i < 9999; i++) arr.push(i % 2 === 0 ? 1 : 2);
+        for (var i = 0; i < 49999; i++) arr.push(i % 2 === 0 ? 1 : 2);
         arr.push(100); // 끊기는 원소
-        for (var i = 0; i < 10000; i++) arr.push(i % 2 === 0 ? 1 : 2);
+        for (var i = 0; i < 50000; i++) arr.push(i % 2 === 0 ? 1 : 2);
         testCases.push(makeCase(arr));
     })();
 
@@ -135,7 +135,7 @@
     window.PROBLEMS['9001'] = {
         id:          "9001",
         title:       "파도의 만가",
-        timeLimit:   1,
+        timeLimit:   2,
         memoryLimit: 256,
 
         tier: { name: "Gold", level: "II" },
@@ -161,7 +161,7 @@
 
 원소를 제거하지 않거나 하나 제거한 뒤, 남은 수열에서 만들 수 있는 가장 긴 만가 구간의 길이를 구하여라.`,
 
-        inputDesc:  `첫째 줄에 정수 N이 주어진다. (1 ≤ N ≤ 20,000)
+        inputDesc:  `첫째 줄에 정수 N이 주어진다. (1 ≤ N ≤ 100,000)
 둘째 줄에 수열 A₁, A₂, ..., Aₙ이 주어진다. (1 ≤ Aᵢ ≤ 100,000)`,
 
         outputDesc: `조건을 만족하는 가장 긴 만가 구간의 길이를 출력한다.`,

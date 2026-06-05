@@ -28,12 +28,12 @@
     var testCases = [];
 
     // ── 경계값 ───────────────────────────────────
-    [1, 2, 3, 5, 10, 50, 99, 100].forEach(function (n) { testCases.push(add(n)); });
+    [1, 2, 3, 5, 10, 100, 1000, 10000, 50000, 99999, 100000].forEach(function (n) { testCases.push(add(n)); });
 
     // ── 시드 고정 랜덤 ───────────────────────────
-    for (var i = 1; i <= 90; i++) {
+    for (var i = 1; i <= 45; i++) {
         var rng = makeRng(i);
-        testCases.push(add(randRange(rng, 1, 100)));
+        testCases.push(add(randRange(rng, 1, 100000)));
     }
 
     // ── N 오름차순 정렬 ──────────────────────────
@@ -50,13 +50,13 @@
 
         id:          "1012",
         title:       "N",
-        timeLimit:   1,
+        timeLimit:   2,
         memoryLimit: 256,
 
         tier: { name: "Bronze", level: "IV" },
 
         description: `정수 N이 주어졌을 때, 1부터 N까지의 수를 한 줄에 하나씩 출력하시오.`,
-        inputDesc:   `첫째 줄에 정수 N이 주어진다. (1 ≤ N ≤ 10,000)`,
+        inputDesc:   `첫째 줄에 정수 N이 주어진다. (1 ≤ N ≤ 100,000)`,
         outputDesc:  `1부터 N까지의 수를 한 줄에 하나씩 차례대로 출력한다.`,
 
         examples: [

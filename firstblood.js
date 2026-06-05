@@ -86,7 +86,6 @@ function showNext() {
         setTimeout(() => { toast.remove(); showNext(); }, 300);
     };
     toast.querySelector('.fb-close').addEventListener('click', close);
-    setTimeout(close, 7000);
 }
 
 function esc(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }

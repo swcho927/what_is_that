@@ -69,7 +69,7 @@
 
         tier: { name: "Bronze", level: "III" },
 
-        description: `점수에 따라 다음과 같이 학점을 출력하시오.
+        description: `인과영에서는 원점수에 따라 학점이 결정된다. 다음은 학점의 경계값과 그에 따른 학점이다.
 
 90점 이상: A+
 85점 이상: A0

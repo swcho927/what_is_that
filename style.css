@@ -82,6 +82,7 @@ body {
 .sidebar-item {
     display: flex;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 8px;
     padding: 8px 14px;
     cursor: pointer;
@@ -102,10 +103,20 @@ body {
     font-size: 0.72rem;
     color: var(--text-subtle);
     min-width: 36px;
+    flex-shrink: 0;
 }
 .sidebar-title {
     font-size: 0.86rem;
     color: var(--text-muted);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.solved-marker, .tier-badge {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 .sidebar-item.active .sidebar-title {
     color: var(--blue);

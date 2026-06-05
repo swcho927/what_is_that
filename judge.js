@@ -186,6 +186,8 @@ function getValFromTokens(toks) {
     return parseExpr();
 }
 
+window.runCode = runCode;
+
 function precompile(code) {
     return code.split("\n").map(line => {
         const fullLine = line.split('#')[0].trim();

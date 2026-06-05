@@ -139,6 +139,20 @@
         pairs.push(makeRandPair(rngR, ln2, lm2));
     }
 
+    // ── 최댓값 집중 (dₙ≈9000~10000): yes 10 + 혼합 10 ──
+    for (var i = 1; i <= 10; i++) {
+        var rngYM = makeRng(3000 + i);
+        var lnM = randRange(rngYM, 9000, 10000);
+        var lmM = randRange(rngYM, lnM - 500, lnM);
+        pairs.push(makeYes(rngYM, lmM, lnM));
+    }
+    for (var k = 1; k <= 10; k++) {
+        var rngRM = makeRng(4000 + k);
+        var ln2M = randRange(rngRM, 9000, 10000);
+        var lm2M = randRange(rngRM, 1, ln2M);
+        pairs.push(makeRandPair(rngRM, ln2M, lm2M));
+    }
+
     // ── 걸리는 시간(≈ N 길이) 오름차순 정렬 ─────────
     pairs.sort(function (a, b) {
         return (a[0].length - b[0].length) || (a[1].length - b[1].length);

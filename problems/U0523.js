@@ -1,8 +1,8 @@
 //  problems/U0523.js  ─  얼척이를 잡아라 (그뭐냐 언어)
 //
 //  BFS + 점프 조건
-//  1 ≤ N, M ≤ 500
-//  Silver I → 67개
+//  1 ≤ N, M ≤ 300
+//  Silver I → 67개 + 최댓값 집중
 //  정렬: N*M 오름차순 (실행 시간 오름차순)
 // ════════════════════════════════════════════════
 (function () {
@@ -159,37 +159,37 @@
     add([[3,0,1],[0,0,0],[0,0,2]]);
     add([[1,3,0],[0,0,0],[0,2,0]]);
 
-    // N=1, M=500 긴 행
+    // N=1, M=300 긴 행
     (function() {
-        const row = Array(500).fill(0);
-        row[0] = 3; row[499] = 2;
+        const row = Array(300).fill(0);
+        row[0] = 3; row[299] = 2;
         add([row]);
     })();
 
-    // N=500, M=1 긴 열
+    // N=300, M=1 긴 열
     (function() {
-        const g = Array.from({length:500}, () => [0]);
-        g[0][0] = 3; g[499][0] = 2;
+        const g = Array.from({length:300}, () => [0]);
+        g[0][0] = 3; g[299][0] = 2;
         add(g);
     })();
 
     // ── 극단값 ───────────────────────────────────
 
-    // N=500, M=500 바위 없음
+    // N=300, M=300 바위 없음
     (function() {
-        const g = Array.from({length:500}, () => Array(500).fill(0));
-        g[0][0] = 3; g[499][499] = 2;
+        const g = Array.from({length:300}, () => Array(300).fill(0));
+        g[0][0] = 3; g[299][299] = 2;
         add(g);
     })();
 
-    // N=500, M=500 바위 20%
+    // N=300, M=300 바위 20%
     (function() {
-        add(randGrid(makeRng(1), 500, 500, 20));
+        add(randGrid(makeRng(1), 300, 300, 20));
     })();
 
-    // N=500, M=500 바위 50%
+    // N=300, M=300 바위 50%
     (function() {
-        add(randGrid(makeRng(2), 500, 500, 50));
+        add(randGrid(makeRng(2), 300, 300, 50));
     })();
 
     // ── 랜덤 소규모 (3×3 ~ 5×5): 15개 ──────────
@@ -199,18 +199,25 @@
         add(randGrid(rng, N, M, randInt(rng, 10, 40)));
     }
 
-    // ── 랜덤 중규모 (10×10 ~ 150×150): 15개 ────
+    // ── 랜덤 중규모 (10×10 ~ 100×100): 15개 ────
     for (let seed = 25; seed < 40; seed++) {
         const rng = makeRng(seed);
-        const N = randInt(rng, 10, 150), M = randInt(rng, 10, 150);
+        const N = randInt(rng, 10, 100), M = randInt(rng, 10, 100);
         add(randGrid(rng, N, M, randInt(rng, 15, 45)));
     }
 
-    // ── 랜덤 대규모 (200×200 ~ 500×500): 14개 ──
+    // ── 랜덤 대규모 (150×150 ~ 300×300): 14개 ──
     for (let seed = 40; seed < 54; seed++) {
         const rng = makeRng(seed);
-        const N = randInt(rng, 200, 500), M = randInt(rng, 200, 500);
+        const N = randInt(rng, 150, 300), M = randInt(rng, 150, 300);
         add(randGrid(rng, N, M, randInt(rng, 20, 50)));
+    }
+
+    // ── 최댓값 집중 (≈300×300): 16개 ────────────
+    for (let seed = 100; seed < 116; seed++) {
+        const rng = makeRng(seed);
+        const N = randInt(rng, 280, 300), M = randInt(rng, 280, 300);
+        add(randGrid(rng, N, M, randInt(rng, 15, 55)));
     }
 
     // ── 실행 시간 오름차순 정렬 (N*M 기준) ───────
@@ -235,7 +242,7 @@
 모든 위치는 사각형 모양의 화단에 있는 격자점이다. 우진이는 인접한 땅을 따라 움직일 수 있다.
 “바위를 뛰어넘는다”는 현재 위치에 인접한 바위 방향으로 두 칸 이동했을 때 얼척이가 있는 경우를 뜻한다.`,
 
-        inputDesc: `화단의 크기 N과 M이 주어진다. (1 ≤ N, M ≤ 500)
+        inputDesc: `화단의 크기 N과 M이 주어진다. (1 ≤ N, M ≤ 300)
 그 이후 N*M 만큼의 숫자로 지형이 주어진다.
 0: 지나갈 수 있는 땅
 1: 바위

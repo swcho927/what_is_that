@@ -124,6 +124,15 @@
         testCases.push(makeCase(arr));
     }
 
+    // ── 최댓값 집중 (N=9000~10000): 20개 ─────────
+    for (var seed = 1000; seed <= 1019; seed++) {
+        var rng = makeRng(seed);
+        var n   = randRange(rng, 9000, 10000);
+        var arr = [];
+        for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 1000000));
+        testCases.push(makeCase(arr));
+    }
+
     window.PROBLEMS['3000'] = {
 
         id:          "3000",

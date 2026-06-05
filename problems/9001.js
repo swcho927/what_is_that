@@ -124,6 +124,15 @@
         testCases.push(makeCase(arr));
     })();
 
+    // ── 최댓값 집중 (N=90000~100000): 16개 ──
+    for (var seed = 300; seed <= 315; seed++) {
+        var rng = makeRng(seed);
+        var n = randRange(rng, 90000, 100000);
+        var arr = [];
+        for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 100000));
+        testCases.push(makeCase(arr));
+    }
+
     // ── 시간 오래 걸리는 순 정렬 (N 오름차순) ──
     testCases.sort(function(a, b) {
         var nA = parseInt(a.in.split('\n')[0]);

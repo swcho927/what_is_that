@@ -1,8 +1,8 @@
 // ════════════════════════════════════════════════
 //  problems/2000.js  ─  정렬 (그뭐냐 언어)
 //
-//  N ≤ 500, 1 ≤ Ai ≤ 1,000,000
-//  Silver I → 65개 (경계값 12 + 랜덤 53)
+//  N ≤ 300, 1 ≤ Ai ≤ 1,000,000
+//  Silver I → 경계값 12 + 랜덤 40 + 최댓값(N≈300) 집중 20
 // ════════════════════════════════════════════════
 (function () {
 
@@ -43,47 +43,56 @@
     testCases.push(makeCase([1000000, 999999]));
     testCases.push(makeCase([1, 1000000]));
 
-    // N=500, 이미 정렬됨
+    // N=300, 이미 정렬됨
     (function() {
-        var arr = []; for (var i = 1; i <= 500; i++) arr.push(i);
+        var arr = []; for (var i = 1; i <= 300; i++) arr.push(i);
         testCases.push(makeCase(arr));
     })();
 
-    // N=500, 역순
+    // N=300, 역순
     (function() {
-        var arr = []; for (var i = 500; i >= 1; i--) arr.push(i);
+        var arr = []; for (var i = 300; i >= 1; i--) arr.push(i);
         testCases.push(makeCase(arr));
     })();
 
-    // N=500, 모두 같은 값
+    // N=300, 모두 같은 값
     (function() {
-        var arr = []; for (var i = 0; i < 500; i++) arr.push(42);
+        var arr = []; for (var i = 0; i < 300; i++) arr.push(42);
         testCases.push(makeCase(arr));
     })();
 
-    // N=500, 최솟값/최댓값 교차
+    // N=300, 최솟값/최댓값 교차
     (function() {
-        var arr = []; for (var i = 0; i < 250; i++) arr.push(1);
-        for (var i = 0; i < 250; i++) arr.push(1000000);
+        var arr = []; for (var i = 0; i < 150; i++) arr.push(1);
+        for (var i = 0; i < 150; i++) arr.push(1000000);
         testCases.push(makeCase(arr));
     })();
 
-    // N=500, 최솟값만
+    // N=300, 최솟값만
     (function() {
-        var arr = []; for (var i = 0; i < 500; i++) arr.push(1);
+        var arr = []; for (var i = 0; i < 300; i++) arr.push(1);
         testCases.push(makeCase(arr));
     })();
 
-    // N=500, 최댓값만
+    // N=300, 최댓값만
     (function() {
-        var arr = []; for (var i = 0; i < 500; i++) arr.push(1000000);
+        var arr = []; for (var i = 0; i < 300; i++) arr.push(1000000);
         testCases.push(makeCase(arr));
     })();
 
-    // ── 랜덤 케이스 53개 ─────────────────────────
-    for (var seed = 1; seed <= 53; seed++) {
+    // ── 랜덤 케이스 40개 (N=1~300) ───────────────
+    for (var seed = 1; seed <= 40; seed++) {
         var rng = makeRng(seed);
-        var n   = randRange(rng, 1, 500);
+        var n   = randRange(rng, 1, 300);
+        var arr = [];
+        for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 1000000));
+        testCases.push(makeCase(arr));
+    }
+
+    // ── 최댓값 집중 20개 (N=280~300) ─────────────
+    for (var seed = 1000; seed <= 1019; seed++) {
+        var rng = makeRng(seed);
+        var n   = randRange(rng, 280, 300);
         var arr = [];
         for (var j = 0; j < n; j++) arr.push(randRange(rng, 1, 1000000));
         testCases.push(makeCase(arr));
@@ -99,7 +108,7 @@
         tier: { name: "Silver", level: "I" },
 
         description: `N개의 정수가 주어졌을 때, 이를 오름차순으로 정렬하여 출력하시오.`,
-        inputDesc:   `첫째 줄에 N이 주어진다. (1 ≤ N ≤ 500)
+        inputDesc:   `첫째 줄에 N이 주어진다. (1 ≤ N ≤ 300)
 둘째 줄에 N개의 정수 Aᵢ가 공백으로 구분하여 주어진다. (1 ≤ Aᵢ ≤ 1,000,000)`,
         outputDesc:  `첫째 줄에 오름차순으로 정렬한 결과를 공백으로 구분하여 출력한다.`,
 

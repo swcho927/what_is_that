@@ -36,6 +36,12 @@
         testCases.push(add(randRange(rng, 1, 100000)));
     }
 
+    // ── 최댓값 집중 (N=90000~100000) 15개 ────────
+    for (var i = 1000; i <= 1014; i++) {
+        var rng = makeRng(i);
+        testCases.push(add(randRange(rng, 90000, 100000)));
+    }
+
     // ── N 오름차순 정렬 ──────────────────────────
     testCases.sort(function (x, y) { return parseInt(x.in) - parseInt(y.in); });
 

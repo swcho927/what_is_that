@@ -147,6 +147,15 @@
         add(n + "\n" + arr.join(' '));
     });
 
+    // F. 최댓값 집중 (N=90000~100000) 15개
+    for (var seed = 500; seed <= 514; seed++) {
+        var rng = makeRng(seed);
+        var n = randInt(rng, 90000, 100000);
+        var arr = [];
+        for (var i = 0; i < n; i++) arr.push(randInt(rng, 1, 1000000));
+        add(n + "\n" + arr.join(' '));
+    }
+
     window.PROBLEMS['U1991'] = {
         id:          "U1991",
         title:       "Stalin Sort",

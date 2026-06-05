@@ -118,85 +118,98 @@ function tokenizeLine(text) {
     return tokens;
 }
 
-function resolveAddrFromTokens(tokens) {
+// 토큰 → 클로저 컴파일. 한 번만 파싱해서 () => 값 형태의 함수를 만들어 둔다.
+// (기존엔 실행 줄마다 재파싱 + 클로저 5개 생성이라 느렸음)
+function compileTokens(toks) {
+    if (!toks.length) return () => 0;
+    let pos = 0;
+    const peek = () => toks[pos];
+
+    function atom() {
+        const p = peek();
+        if (p && p.type === 'bracket' && p.val === '어') return () => 0;   // 아어거 = memory[0]
+        const t = toks[pos++];
+        if (!t) return () => 0;
+        if (t.type === 'bracket' && t.val === '아') {                      // 아...어 괄호
+            const inner = expr();
+            pos++; // 어 소비
+            let derefs = 0;
+            while (peek() && peek().type === 'geo') derefs += toks[pos++].val.length;
+            if (derefs === 0) return inner;
+            return () => { let r = inner(); for (let i = 0; i < derefs; i++) r = memory.get(r) ?? 0; return r; };
+        }
+        if (t.type === 'num') {                                            // 그+ 숫자/주소
+            const base = t.val.length;
+            let derefs = 0;
+            while (peek() && peek().type === 'geo') derefs += toks[pos++].val.length;
+            if (derefs === 0) return () => base;
+            return () => { let v = base; for (let i = 0; i < derefs; i++) v = memory.get(v) ?? 0; return v; };
+        }
+        return () => 0;
+    }
+    function factor() {
+        let node = atom(), p;
+        while ((p = peek()) && p.type === 'op' && (p.val === '.' || p.val === '..' || p.val === '...')) {
+            const op = toks[pos++].val, left = node, right = atom();
+            if      (op === '.')  node = () => left() * right();
+            else if (op === '..') node = () => Math.floor(left() / right());
+            else                  node = () => left() % right();
+        }
+        return node;
+    }
+    function term() {
+        let node = factor(), p;
+        while ((p = peek()) && p.type === 'op' && (p.val === ',' || p.val === ',,')) {
+            const op = toks[pos++].val, left = node, right = factor();
+            node = op === ',' ? () => left() + right() : () => left() - right();
+        }
+        return node;
+    }
+    function expr() {
+        let node = term(), p;
+        while ((p = peek()) && p.type === 'op' && (p.val === '~' || p.val === ';' || p.val === ';;')) {
+            const op = toks[pos++].val, left = node, right = term();
+            if      (op === '~')  node = () => left() === right() ? 1 : 0;
+            else if (op === ';')  node = () => left() >  right()  ? 1 : 0;
+            else                  node = () => left() >= right()  ? 1 : 0;
+        }
+        return node;
+    }
+    return expr();
+}
+
+// 주소 토큰 → 클로저. 끝의 거 토큰들을 간접참조로 해석 (마지막 거 1개는 주소 자체)
+function compileAddr(tokens) {
     let geoCount = 0, i = tokens.length - 1;
     while (i >= 0 && tokens[i].type === 'geo') { geoCount += tokens[i].val.length; i--; }
-    let addr = i < 0 ? 0 : getValFromTokens(tokens.slice(0, i + 1));
-    for (let j = 0; j < geoCount - 1; j++) addr = memory.get(addr) ?? 0;
-    return addr;
+    const baseFn = i < 0 ? (() => 0) : compileTokens(tokens.slice(0, i + 1));
+    const derefs = geoCount - 1;
+    if (derefs <= 0) return baseFn;
+    return () => { let a = baseFn(); for (let j = 0; j < derefs; j++) a = memory.get(a) ?? 0; return a; };
 }
 
-function getValFromTokens(toks) {
-    if (!toks.length) return 0;
-    let pos = 0;
-    const consume = () => toks[pos++];
-    const peek    = () => toks[pos];
-
-    function parseAtom() {
-        if (peek()?.type === 'bracket' && peek()?.val === '어') return 0;
-        const t = consume();
-        if (!t) return 0;
-        if (t.type === 'bracket' && t.val === '아') {
-            let res = parseExpr();
-            consume(); // 어 소비
-            while (peek()?.type === 'geo') {
-                const g = consume();
-                for (let i = 0; i < g.val.length; i++) res = memory.get(res) ?? 0;
-            }
-            return res;
-        }
-        if (t.type === 'num') {
-            let val = t.val.length;
-            while (peek()?.type === 'geo') {
-                const g = consume();
-                for (let i = 0; i < g.val.length; i++) val = memory.get(val) ?? 0;
-            }
-            return val;
-        }
-        return 0;
-    }
-    function parseFactor() {
-        let node = parseAtom();
-        while (peek()?.type === 'op' && ['.','..','...'].includes(peek().val)) {
-            const op = consume().val, right = parseAtom();
-            if (op === '.')       node *= right;
-            else if (op === '..') node = Math.floor(node / right);
-            else                  node %= right;
-        }
-        return node;
-    }
-    function parseTerm() {
-        let node = parseFactor();
-        while (peek()?.type === 'op' && [',',',,'].includes(peek().val)) {
-            const op = consume().val, right = parseFactor();
-            node = op === ',' ? node + right : node - right;
-        }
-        return node;
-    }
-    function parseExpr() {
-        let node = parseTerm();
-        while (peek()?.type === 'op' && ['~',';',';;'].includes(peek().val)) {
-            const op = consume().val, right = parseTerm();
-            if      (op === '~')  node = node === right ? 1 : 0;
-            else if (op === ';')  node = node > right   ? 1 : 0;
-            else if (op === ';;') node = node >= right  ? 1 : 0;
-        }
-        return node;
-    }
-    return parseExpr();
-}
+// 명령어 → 타입코드: 0 뭐더라 1 진짜뭐지 2 진짜뭐냐 3 뭐지 4 뭐냐 5 있잖아
+const CMD_TYPE = { '뭐더라': 0, '진짜뭐지': 1, '진짜뭐냐': 2, '뭐지': 3, '뭐냐': 4, '있잖아': 5 };
 
 window.runCode = runCode;
 
+let _precompileCache = null;
 function precompile(code) {
-    return code.split("\n").map(line => {
+    if (_precompileCache && _precompileCache.code === code) return _precompileCache.result;
+    const result = code.split("\n").map(line => {
         const fullLine = line.split('#')[0].trim();
         if (!fullLine) return null;
         const allToks = tokenizeLine(fullLine).filter(t => t.type !== 'text' && t.type !== 'comment');
         const cmdIdx  = allToks.findIndex(t => t.type === 'cmd');
         if (cmdIdx === -1) return null;
-        return { cmdVal: allToks[cmdIdx].val, leftToks: allToks.slice(0, cmdIdx), rightToks: allToks.slice(cmdIdx + 1) };
+        const t = CMD_TYPE[allToks[cmdIdx].val];
+        const leftToks = allToks.slice(0, cmdIdx), rightToks = allToks.slice(cmdIdx + 1);
+        if (t === 0)            return { t, a: compileAddr(leftToks), b: compileTokens(rightToks) }; // 뭐더라
+        if (t === 1 || t === 3) return { t, a: compileAddr(leftToks) };                             // 진짜뭐지 / 뭐지
+        return { t, b: compileTokens(leftToks) };                                                    // 진짜뭐냐 / 뭐냐 / 있잖아
     });
+    _precompileCache = { code, result };
+    return result;
 }
 
 function runCode(code, input, timeLimitMs, memLimitMB) {
@@ -217,32 +230,31 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
     };
     const compiled = precompile(code), len = compiled.length;
     const memLimit = memLimitMB * 1024 * 1024, startTime = Date.now();
-    let peakMem = 0;
+    let steps = 0;
 
     try {
         while (pc >= 0 && pc < len) {
-            if (memory.size > peakMem) peakMem = memory.size;
-            const elapsed = Date.now() - startTime;
-            if (elapsed > timeLimitMs)      return { output: out.trim(), verdict: "TLE", time: elapsed, mem: peakMem * 8 };
-            if (memory.size * 8 > memLimit) return { output: out.trim(), verdict: "MLE", time: elapsed, mem: memory.size * 8 };
+            // 메모리는 단조 증가라 MLE는 매 스텝 검사(저렴). 시간 검사는 1024스텝마다(Date.now 비용 절감)
+            if (memory.size * 8 > memLimit) return { output: out.trim(), verdict: "MLE", time: Date.now() - startTime, mem: memory.size * 8 };
+            if ((steps++ & 1023) === 0 && Date.now() - startTime > timeLimitMs) return { output: out.trim(), verdict: "TLE", time: Date.now() - startTime, mem: memory.size * 8 };
 
             const line = compiled[pc];
             let jumped = false;
-
             if (line) {
-                const { cmdVal, leftToks, rightToks } = line;
-                if      (cmdVal === '뭐더라')  { memory.set(resolveAddrFromTokens(leftToks), getValFromTokens(rightToks)); }
-                else if (cmdVal === '진짜뭐지') { memory.set(resolveAddrFromTokens(leftToks), readChar()); }
-                else if (cmdVal === '진짜뭐냐') { out += String.fromCharCode(getValFromTokens(leftToks)); }
-                else if (cmdVal === '뭐지')    { memory.set(resolveAddrFromTokens(leftToks), readNum()); }
-                else if (cmdVal === '뭐냐')    { out += String(getValFromTokens(leftToks)); }
-                else if (cmdVal === '있잖아')  { pc += getValFromTokens(leftToks); jumped = true; }
+                switch (line.t) {
+                    case 0: memory.set(line.a(), line.b());     break;   // 뭐더라
+                    case 1: memory.set(line.a(), readChar());   break;   // 진짜뭐지
+                    case 2: out += String.fromCharCode(line.b()); break; // 진짜뭐냐
+                    case 3: memory.set(line.a(), readNum());    break;   // 뭐지
+                    case 4: out += line.b();                    break;   // 뭐냐
+                    case 5: pc += line.b(); jumped = true;      break;   // 있잖아
+                }
             }
             if (!jumped) pc++;
         }
-        return { output: out.trim(), verdict: "AC", time: Date.now() - startTime, mem: peakMem * 8 };
+        return { output: out.trim(), verdict: "AC", time: Date.now() - startTime, mem: memory.size * 8 };
     } catch(err) {
-        return { output: out.trim(), verdict: "RE: " + err.message, time: Date.now() - startTime, mem: peakMem * 8 };
+        return { output: out.trim(), verdict: "RE: " + err.message, time: Date.now() - startTime, mem: memory.size * 8 };
     }
 }
 

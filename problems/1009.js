@@ -67,7 +67,7 @@
         timeLimit:   1,
         memoryLimit: 256,
 
-        tier: { name: "Bronze", level: "III" },
+        tier: { name: "Bronze", level: "I" },
 
         description: `인과영에서는 원점수에 따라 학점이 결정된다. 다음은 학점의 경계값과 그에 따른 학점이다.
 

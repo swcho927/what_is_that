@@ -423,6 +423,7 @@ async function submitCode(probId) {
         updateProgress(els, i, tcs.length);
         if (result.time > peakTime) peakTime = result.time;
         if (result.mem  > peakMem)  peakMem  = result.mem;
+        console.log(`[테스트 ${i+1}/${tcs.length}] ${result.verdict}  시간 ${result.time}ms  메모리 ${result.mem}B`);
 
         let failMsg = "", verdict = "";
         if      (result.verdict === "TLE")        { failMsg = `[테스트 ${i+1}] 시간 초과`;        verdict = "TLE"; }

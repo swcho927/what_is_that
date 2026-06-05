@@ -235,8 +235,8 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
     try {
         while (pc >= 0 && pc < len) {
             // 메모리는 단조 증가라 MLE는 매 스텝 검사(저렴). 시간 검사는 1024스텝마다(Date.now 비용 절감)
-            if (memory.size * 8 > memLimit) return { output: out.trim(), verdict: "MLE", time: Date.now() - startTime, mem: memory.size * 8 };
-            if ((steps++ & 1023) === 0 && Date.now() - startTime > timeLimitMs) return { output: out.trim(), verdict: "TLE", time: Date.now() - startTime, mem: memory.size * 8 };
+            if (memory.size * 8 > memLimit) return { output: out.trim(), verdict: "MLE", time: Date.now() - startTime, mem: memory.size * 8, steps };
+            if ((steps++ & 1023) === 0 && Date.now() - startTime > timeLimitMs) return { output: out.trim(), verdict: "TLE", time: Date.now() - startTime, mem: memory.size * 8, steps };
 
             const line = compiled[pc];
             let jumped = false;
@@ -252,9 +252,9 @@ function runCode(code, input, timeLimitMs, memLimitMB) {
             }
             if (!jumped) pc++;
         }
-        return { output: out.trim(), verdict: "AC", time: Date.now() - startTime, mem: memory.size * 8 };
+        return { output: out.trim(), verdict: "AC", time: Date.now() - startTime, mem: memory.size * 8, steps };
     } catch(err) {
-        return { output: out.trim(), verdict: "RE: " + err.message, time: Date.now() - startTime, mem: memory.size * 8 };
+        return { output: out.trim(), verdict: "RE: " + err.message, time: Date.now() - startTime, mem: memory.size * 8, steps };
     }
 }
 
@@ -423,7 +423,8 @@ async function submitCode(probId) {
         updateProgress(els, i, tcs.length);
         if (result.time > peakTime) peakTime = result.time;
         if (result.mem  > peakMem)  peakMem  = result.mem;
-        console.log(`[테스트 ${i+1}/${tcs.length}] ${result.verdict}  시간 ${result.time}ms  메모리 ${result.mem}B`);
+        const opsPerSec = result.time > 0 ? Math.round(result.steps / result.time * 1000) : result.steps;
+        console.log(`[테스트 ${i+1}/${tcs.length}] ${result.verdict}  시간 ${result.time}ms  메모리 ${result.mem}B  연산 ${result.steps.toLocaleString()}회  (초당 ${opsPerSec.toLocaleString()}회)`);
 
         let failMsg = "", verdict = "";
         if      (result.verdict === "TLE")        { failMsg = `[테스트 ${i+1}] 시간 초과`;        verdict = "TLE"; }

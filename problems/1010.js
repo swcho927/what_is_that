@@ -60,7 +60,7 @@
         timeLimit:   1,
         memoryLimit: 256,
 
-        tier: { name: "Bronze", level: "IV" },
+        tier: { name: "Bronze", level: "V" },
 
         description: `2점 슛 개수와 3점 슛 개수가 주어졌을 때, 내가 얻은 총 점수를 구하시오.`,
         inputDesc:   `첫째 줄에 2점 슛 개수 A와 3점 슛 개수 B가 공백으로 구분하여 주어진다. (0 ≤ A, B ≤ 1,000)`,

@@ -2,7 +2,7 @@
 //  problems/2000.js  ─  정렬 (그뭐냐 언어)
 //
 //  N ≤ 300, 1 ≤ Ai ≤ 1,000,000
-//  Silver I → 경계값 12 + 랜덤 40 + 최댓값(N≈300) 집중 20
+//  Silver I → 70개: 경계값 12 + 랜덤 14 + 최댓값(N≈300) 집중 44
 // ════════════════════════════════════════════════
 (function () {
 
@@ -80,8 +80,8 @@
         testCases.push(makeCase(arr));
     })();
 
-    // ── 랜덤 케이스 40개 (N=1~300) ───────────────
-    for (var seed = 1; seed <= 40; seed++) {
+    // ── 랜덤 케이스 14개 (N=1~300, 중간 크기 검증용) ─
+    for (var seed = 1; seed <= 14; seed++) {
         var rng = makeRng(seed);
         var n   = randRange(rng, 1, 300);
         var arr = [];
@@ -89,8 +89,8 @@
         testCases.push(makeCase(arr));
     }
 
-    // ── 최댓값 집중 20개 (N=280~300) ─────────────
-    for (var seed = 1000; seed <= 1019; seed++) {
+    // ── 최댓값 집중 44개 (N=280~300) — 난이도는 여기서 결정 ─
+    for (var seed = 1000; seed <= 1043; seed++) {
         var rng = makeRng(seed);
         var n   = randRange(rng, 280, 300);
         var arr = [];

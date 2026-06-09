@@ -3,7 +3,7 @@
 //
 //  범위: 1 ≤ A, B ≤ 10,000
 //  출력: 소수점 9자리까지 내림 (floor)
-//  총 50개 (경계값 8 + 랜덤 42)
+//  Bronze II → 58개 (경계값 8 + 랜덤 50)
 //  specialJudge: 소수점 10자리에서 비교 (반올림 허용)
 // ════════════════════════════════════════════════
 (function () {
@@ -50,7 +50,7 @@
         testCases.push({ in: p[0] + " " + p[1], out: solve(p[0], p[1]) });
     });
 
-    for (var seed = 1; seed <= 42; seed++) {
+    for (var seed = 1; seed <= 50; seed++) {
         var rng = makeRng(seed);
         var a = randRange(rng, 1, 10000);
         var b = randRange(rng, 1, 10000);

@@ -82,8 +82,8 @@
     testCases.push(makeCase([1, 10, 1, 10, 1, 10]));
     testCases.push(makeCase([1, 100, 200, 300, 400]));
 
-    // ── small 랜덤 (N=3~10) ──
-    for (var seed = 1; seed <= 10; seed++) {
+    // ── small 랜덤 (N=3~10): 4개 ──
+    for (var seed = 1; seed <= 4; seed++) {
         var rng = makeRng(seed);
         var n = randRange(rng, 3, 10);
         var arr = [];
@@ -91,8 +91,8 @@
         testCases.push(makeCase(arr));
     }
 
-    // ── medium 랜덤 (N=100~1000) ──
-    for (var seed = 100; seed <= 119; seed++) {
+    // ── medium 랜덤 (N=100~1000): 6개 ──
+    for (var seed = 100; seed <= 105; seed++) {
         var rng = makeRng(seed);
         var n = randRange(rng, 100, 1000);
         var arr = [];
@@ -100,8 +100,8 @@
         testCases.push(makeCase(arr));
     }
 
-    // ── large 랜덤 (N=20000~100000) ──
-    for (var seed = 200; seed <= 219; seed++) {
+    // ── large 랜덤 (N=20000~100000): 14개 ──
+    for (var seed = 200; seed <= 213; seed++) {
         var rng = makeRng(seed);
         var n = randRange(rng, 20000, 100000);
         var arr = [];
@@ -124,8 +124,8 @@
         testCases.push(makeCase(arr));
     })();
 
-    // ── 최댓값 집중 (N=90000~100000): 16개 ──
-    for (var seed = 300; seed <= 315; seed++) {
+    // ── 최댓값 집중 (N=90000~100000): 28개 — 난이도는 여기서 결정 ──
+    for (var seed = 300; seed <= 327; seed++) {
         var rng = makeRng(seed);
         var n = randRange(rng, 90000, 100000);
         var arr = [];

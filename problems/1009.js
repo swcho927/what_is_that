@@ -44,21 +44,22 @@
         testCases.push(add(s));
     });
 
-    // ── 시드 고정 랜덤 ───────────────────────────
-    for (var i = 1; i <= 40; i++) {
-        var rng = makeRng(i);
-        testCases.push(add(randRange(rng, 0, 100)));
-    }
-
-    // ── 점수 오름차순 정렬 ───────────────────────
-    testCases.sort(function (x, y) { return parseInt(x.in) - parseInt(y.in); });
-
-    // 중복 제거
+    // ── 중복 제거 후 시드 고정 랜덤으로 정확히 50개까지 채움 ──
     var seen = new Set();
     testCases = testCases.filter(function (tc) {
         if (seen.has(tc.in)) return false;
         seen.add(tc.in); return true;
     });
+    var rng = makeRng(12345);
+    while (testCases.length < 60) {
+        var s = randRange(rng, 0, 100);
+        if (seen.has(String(s))) continue;
+        seen.add(String(s));
+        testCases.push(add(s));
+    }
+
+    // ── 점수 오름차순 정렬 ───────────────────────
+    testCases.sort(function (x, y) { return parseInt(x.in) - parseInt(y.in); });
 
     window.PROBLEMS['1009'] = {
 

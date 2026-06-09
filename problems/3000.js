@@ -2,7 +2,7 @@
 //  problems/3000.js  ─  정렬 (그뭐냐 언어)
 //
 //  N ≤ 10,000, 1 ≤ Ai ≤ 1,000,000
-//  Platinum V → 85개 (경계값 14 + 랜덤 71)
+//  Platinum V → 80개 (경계값 14 + 랜덤 26 + 최댓값 집중 40)
 // ════════════════════════════════════════════════
 (function () {
 
@@ -95,10 +95,10 @@
         testCases.push(makeCase(arr));
     })();
 
-    // ── 랜덤 케이스 71개 ─────────────────────────
+    // ── 랜덤 케이스 26개 (중간 크기 검증용, 큰 쪽 위주) ─
 
-    // 소규모 (N=1~50): 20개
-    for (var seed = 1; seed <= 20; seed++) {
+    // 소규모 (N=1~50): 6개
+    for (var seed = 1; seed <= 6; seed++) {
         var rng = makeRng(seed);
         var n   = randRange(rng, 1, 50);
         var arr = [];
@@ -106,8 +106,8 @@
         testCases.push(makeCase(arr));
     }
 
-    // 중규모 (N=51~2000): 25개
-    for (var seed = 21; seed <= 45; seed++) {
+    // 중규모 (N=51~2000): 8개
+    for (var seed = 21; seed <= 28; seed++) {
         var rng = makeRng(seed);
         var n   = randRange(rng, 51, 2000);
         var arr = [];
@@ -115,8 +115,8 @@
         testCases.push(makeCase(arr));
     }
 
-    // 대규모 (N=2001~10000): 26개
-    for (var seed = 46; seed <= 71; seed++) {
+    // 대규모 (N=2001~10000): 12개
+    for (var seed = 46; seed <= 57; seed++) {
         var rng = makeRng(seed);
         var n   = randRange(rng, 2001, 10000);
         var arr = [];
@@ -124,8 +124,8 @@
         testCases.push(makeCase(arr));
     }
 
-    // ── 최댓값 집중 (N=9000~10000): 20개 ─────────
-    for (var seed = 1000; seed <= 1019; seed++) {
+    // ── 최댓값 집중 (N=9000~10000): 40개 — 난이도는 여기서 결정 ─
+    for (var seed = 1000; seed <= 1039; seed++) {
         var rng = makeRng(seed);
         var n   = randRange(rng, 9000, 10000);
         var arr = [];

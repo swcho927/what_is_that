@@ -32,7 +32,7 @@
     });
 
     // ── 시드 고정 랜덤 ───────────────────────────
-    for (var i = 1; i <= 39; i++) {
+    for (var i = 1; i <= 42; i++) {
         var rng = makeRng(i);
         var a   = randRange(rng, 0, 1000);
         var b   = randRange(rng, 0, 1000);

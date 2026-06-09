@@ -3,7 +3,7 @@
 //
 //  부분 수열 판별 (N에서 글자를 지워 M을 만들 수 있는가)
 //  제약: 1 ≤ dₘ ≤ dₙ ≤ 10,000, 한글/영문/숫자/공백
-//  Silver IV → 60개 (작은값 + 경계 + 극단 + 특이 + 시드 고정 랜덤)
+//  Silver IV → 63개 (큐레이션 46 + 최댓값 집중 17, 크기 분포는 극단값 쪽)
 //  마지막에 걸리는 시간(≈ N 길이) 오름차순 정렬
 // ════════════════════════════════════════════════
 (function () {
@@ -125,28 +125,15 @@
     pairs.push([rep("abcdefghij", 1000), "abcdefghij"]);        // 반복 속 부분 (yes)
     pairs.push([rep("abcdefghij", 1000), rep("a", 1001)]);      // 개수 부족 (no)
 
-    // ── 시드 고정 랜덤 (yes 7 + 혼합 7) ─────────────
-    for (var i = 1; i <= 7; i++) {
-        var rngY = makeRng(1000 + i);
-        var lm = randRange(rngY, 1, 4000);
-        var ln = randRange(rngY, lm, 10000);
-        pairs.push(makeYes(rngY, lm, ln));
-    }
-    for (var k = 1; k <= 7; k++) {
-        var rngR = makeRng(2000 + k);
-        var ln2 = randRange(rngR, 1, 10000);
-        var lm2 = randRange(rngR, 1, ln2);
-        pairs.push(makeRandPair(rngR, ln2, lm2));
-    }
-
-    // ── 최댓값 집중 (dₙ≈9000~10000): yes 10 + 혼합 10 ──
-    for (var i = 1; i <= 10; i++) {
+    // ── 최댓값 집중 (dₙ≈9000~10000): yes 9 + 혼합 8 — 난이도는 여기서 결정 ──
+    // (중간 크기 랜덤은 위 큐레이션 케이스로 충분히 커버되므로 예산을 최댓값에 몰았다)
+    for (var i = 1; i <= 9; i++) {
         var rngYM = makeRng(3000 + i);
         var lnM = randRange(rngYM, 9000, 10000);
         var lmM = randRange(rngYM, lnM - 500, lnM);
         pairs.push(makeYes(rngYM, lmM, lnM));
     }
-    for (var k = 1; k <= 10; k++) {
+    for (var k = 1; k <= 8; k++) {
         var rngRM = makeRng(4000 + k);
         var ln2M = randRange(rngRM, 9000, 10000);
         var lm2M = randRange(rngRM, 1, ln2M);

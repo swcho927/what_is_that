@@ -33,24 +33,24 @@
         testCases.push(add(n));
     });
 
-    // ── 시드 고정 랜덤 (양수/음수 섞임) ──────────
-    for (var i = 1; i <= 40; i++) {
-        var rng  = makeRng(i);
-        var mag  = randRange(rng, 1, 100000);
+    // ── 시드 고정 랜덤으로 정확히 53개까지 채움 (절반은 큰 |N|로 편향) ──
+    var seen = new Set(testCases.map(function (tc) { return tc.in; }));
+    var rng = makeRng(987654321), i = 0;
+    while (testCases.length < 53) {
+        i++;
+        // 짝수 회차는 |N|을 90000~100000으로 몰아 극단값 비중을 높임
+        var mag  = (i % 2 === 0) ? randRange(rng, 90000, 100000)
+                                 : randRange(rng, 1, 100000);
         var sign = (rng() % 2) === 0 ? 1 : -1;
-        testCases.push(add(sign * mag));
+        var tc = add(sign * mag);
+        if (seen.has(tc.in)) continue;
+        seen.add(tc.in);
+        testCases.push(tc);
     }
 
     // ── |N| 오름차순 정렬 ────────────────────────
     testCases.sort(function (x, y) {
         return Math.abs(parseInt(x.in)) - Math.abs(parseInt(y.in));
-    });
-
-    // 중복 제거
-    var seen = new Set();
-    testCases = testCases.filter(function (tc) {
-        if (seen.has(tc.in)) return false;
-        seen.add(tc.in); return true;
     });
 
     window.PROBLEMS['1008'] = {

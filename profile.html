@@ -40,6 +40,17 @@
         .solved-tier { font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; border:1px solid currentColor; background:rgba(255,255,255,0.04); }
         .solved-empty { font-size:0.85rem; color:var(--text-subtle); text-align:center; padding:20px; }
         #loading { text-align:center; color:var(--text-muted); font-weight:bold; }
+        /* 업적 */
+        .ach-section { margin-top:32px; border-top:1px solid var(--border); padding-top:24px; }
+        .ach-section-title { font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:14px; }
+        .ach-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:10px; }
+        .ach-item { display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--bg-main); border:1px solid var(--border); border-radius:10px; }
+        .ach-item.locked { opacity:0.4; filter:grayscale(0.7); }
+        .ach-icon { font-size:1.5rem; line-height:1; flex-shrink:0; }
+        .ach-text { min-width:0; }
+        .ach-name { font-size:0.85rem; font-weight:700; color:var(--text); }
+        .ach-item.locked .ach-name { color:var(--text-muted); }
+        .ach-desc { font-size:0.72rem; color:var(--text-subtle); margin-top:2px; }
     </style>
 </head>
 <body>
@@ -91,6 +102,10 @@
                     구간 진행도: <span id="progress-percent">0%</span>
                 </div>
             </div>
+            <div class="ach-section">
+                <div class="ach-section-title">🏅 업적</div>
+                <div class="ach-grid" id="ach-grid"></div>
+            </div>
             <div class="solved-section">
                 <div class="solved-section-title">✅ 푼 문제</div>
                 <div class="solved-list" id="solved-list"></div>
@@ -103,7 +118,8 @@
     import { app }                                             from './firebase.js';
     import { normId, compareProbId }                           from './idalias.js';
     import { getAuth, onAuthStateChanged }                     from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc }                       from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, arrayUnion, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+    import { computeShortcoding, shortcodingRankOf }           from './shortcoding.js';
 
     const auth = getAuth(app);
     const db   = getFirestore(app);
@@ -136,6 +152,87 @@
         if (!tier) return '#8b949e';
         const found = TIERS.find(t => t.name === `${tier.name} ${tier.level}`);
         return found ? found.color : '#8b949e';
+    }
+
+    // ── 업적 ─────────────────────────────────────────────
+    const ACHIEVEMENTS = [
+        { id:'first-bronze',   icon:'🥉', name:'첫 브론즈',   desc:'첫 브론즈 문제 해결' },
+        { id:'first-silver',   icon:'🥈', name:'첫 실버',     desc:'첫 실버 문제 해결' },
+        { id:'first-gold',     icon:'🥇', name:'첫 골드',     desc:'첫 골드 문제 해결' },
+        { id:'first-platinum', icon:'💠', name:'첫 플래티넘', desc:'첫 플래티넘 문제 해결' },
+        { id:'first-diamond',  icon:'💎', name:'첫 다이아',   desc:'첫 다이아몬드 문제 해결' },
+        { id:'first-ruby',     icon:'❤️', name:'첫 루비',     desc:'첫 루비 문제 해결' },
+        { id:'world-1st',      icon:'👑', name:'세계 1등',    desc:'랭킹 1위 달성' },
+        { id:'ranker',         icon:'🏆', name:'랭커',        desc:'랭킹 5위 이내 달성' },
+        { id:'shortcoder',     icon:'✂️', name:'숏코더',      desc:'숏코딩 랭킹 1위 달성' },
+    ];
+    const TIER_TO_ACH = { Bronze:'first-bronze', Silver:'first-silver', Gold:'first-gold', Platinum:'first-platinum', Diamond:'first-diamond', Ruby:'first-ruby' };
+
+    // 푼 문제들의 티어로부터 티어 업적 산출 (동적 — 저장 안 함)
+    function deriveTierAchievements(solvedIds) {
+        const set = new Set();
+        for (const id of solvedIds) {
+            const a = window.PROBLEMS?.[id]?.tier ? TIER_TO_ACH[window.PROBLEMS[id].tier.name] : null;
+            if (a) set.add(a);
+        }
+        return set;
+    }
+
+    // 전체 유저 레이팅 기준 특정 유저의 순위(공동순위). 레이팅 0이면 Infinity.
+    async function computeOverallRank(uid) {
+        const usnap = await getDocs(collection(db, "users"));
+        const users = []; const allIds = new Set();
+        usnap.forEach(d => {
+            const sv = [...new Set((d.data().solvedProblems || []).map(normId))];
+            sv.forEach(id => allIds.add(id));
+            users.push({ uid: d.id, solved: sv });
+        });
+        await Promise.all([...allIds].map(loadScript));
+        users.forEach(u => {
+            u.rating = u.solved.reduce((s, id) => {
+                const p = window.PROBLEMS?.[id];
+                return s + (p?.tier ? (REWARDS[`${p.tier.name} ${p.tier.level}`] || 0) : 0);
+            }, 0);
+        });
+        const me = users.find(u => u.uid === uid);
+        if (!me || me.rating <= 0) return Infinity;
+        return users.filter(u => u.rating > me.rating).length + 1;
+    }
+
+    async function computeShortcodingRank(uid) {
+        const snap = await getDocs(query(collection(db, "submissions"), where("success", "==", true)));
+        const subs = []; snap.forEach(d => subs.push(d.data()));
+        return shortcodingRankOf(computeShortcoding(subs), uid);
+    }
+
+    // 본인 프로필에서 현재 순위 충족 시 랭크 업적 적립(arrayUnion). 새로 적립한 id 반환.
+    async function grantRankAchievements(uid, alreadyHave) {
+        const want = [];
+        try {
+            const oRank = await computeOverallRank(uid);
+            if (oRank === 1) want.push('world-1st');
+            if (oRank <= 5)  want.push('ranker');
+            if (await computeShortcodingRank(uid) === 1) want.push('shortcoder');
+        } catch(e) { console.error("순위 계산 실패:", e); }
+        const toGrant = want.filter(id => !alreadyHave.has(id));
+        if (toGrant.length) {
+            try { await updateDoc(doc(db, "users", uid), { achievements: arrayUnion(...toGrant) }); }
+            catch(e) { console.error("업적 적립 실패:", e); }
+        }
+        return toGrant;
+    }
+
+    function renderAchievements(earned) {
+        document.getElementById('ach-grid').innerHTML = ACHIEVEMENTS.map(a => {
+            const has = earned.has(a.id);
+            return `<div class="ach-item ${has ? '' : 'locked'}">
+                        <span class="ach-icon">${has ? a.icon : '🔒'}</span>
+                        <span class="ach-text">
+                            <span class="ach-name">${a.name}</span>
+                            <span class="ach-desc">${a.desc}</span>
+                        </span>
+                    </div>`;
+        }).join('');
     }
 
     function loadScript(probId) {
@@ -231,6 +328,16 @@
 
             document.getElementById('loading').style.display = 'none';
             document.getElementById('profile-content').style.display = 'block';
+
+            // ── 업적: 티어(동적) + 적립된 랭크 업적, 본인 프로필이면 현재 순위 충족분 적립 ──
+            const earned = deriveTierAchievements(solved);
+            (data.achievements || []).forEach(id => earned.add(id));
+            renderAchievements(earned);
+            if (user && user.uid === targetUid) {
+                grantRankAchievements(targetUid, new Set(data.achievements || [])).then(newly => {
+                    if (newly.length) { newly.forEach(id => earned.add(id)); renderAchievements(earned); }
+                });
+            }
 
         } catch(e) { console.error(e); alert("프로필 로드 중 오류가 발생했습니다."); }
     });

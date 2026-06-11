@@ -150,7 +150,8 @@
     }
 
     function render() {
-        let rows = selectedProb ? allSubs.filter(s => s.problemId === selectedProb) : allSubs.slice();
+        // 문제별 보기(?problem=ID)는 맞은(AC) 기록만 — 코드 길이·시간 정렬이 유의미하도록
+        let rows = selectedProb ? allSubs.filter(s => s.problemId === selectedProb && s.success) : allSubs.slice();
         if (viewMine) rows = rows.filter(s => s.uid === myUid);
         rows.sort((a, b) => {
             const va = sortValue(a, sortKey), vb = sortValue(b, sortKey);
@@ -196,8 +197,8 @@
     function applyProblemLock() {
         selectedProb = new URLSearchParams(location.search).get('problem') || "";
         if (selectedProb) {
-            document.getElementById('sub-title').textContent = `${selectedProb} 제출 현황`;
-            document.title = `${selectedProb} 제출 현황 - 그 뭐냐 Judge`;
+            document.getElementById('sub-title').textContent = `${selectedProb} 정답 제출 현황`;
+            document.title = `${selectedProb} 정답 제출 현황 - 그 뭐냐 Judge`;
         }
     }
 

@@ -11,7 +11,7 @@
     --text:             #e6edf3;
     --text-muted:       #8b949e;
     --text-subtle:      #6e7681;
-    --sidebar-w:        270px;
+    --sidebar-w:        320px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -135,7 +135,7 @@ body {
 .prob-page.active { display: block; }
 
 .container {
-    max-width: 900px;
+    max-width: 1080px;
     padding: 36px 32px;
     margin: 0 auto;
 }

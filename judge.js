@@ -427,7 +427,7 @@ async function submitCode(probId) {
         console.log(`[테스트 ${i+1}/${tcs.length}] ${result.verdict}  시간 ${result.time}ms  메모리 ${result.mem}B  연산 ${result.steps.toLocaleString()}회  (초당 ${opsPerSec.toLocaleString()}회)`);
 
         let failMsg = "", verdict = "";
-        if      (result.verdict === "TLE")        { failMsg = `[테스트 ${i+1}] 시간 초과`;        verdict = "TLE"; }
+        if      (result.verdict === "TLE")        { failMsg = `[테스트 ${i+1}] 시간 초과\n입력:    ${tcs[i].in.replace(/\n/g," / ")}\n정답:    ${tcs[i].out}\n내 출력: ${result.output}`; verdict = "TLE"; }
         else if (result.verdict === "MLE")        { failMsg = `[테스트 ${i+1}] 메모리 초과`;      verdict = "MLE"; }
         else if (result.verdict.startsWith("RE")) { failMsg = `[테스트 ${i+1}] 런타임 에러\n${result.verdict.slice(4)}`; verdict = "RE"; }
         else {

@@ -63,12 +63,12 @@
     };
 
     const TIERS = [
-        {name:"Bronze V",min:0,color:"#ad5600"},{name:"Bronze IV",min:40,color:"#ad5600"},{name:"Bronze III",min:60,color:"#ad5600"},{name:"Bronze II",min:80,color:"#ad5600"},{name:"Bronze I",min:100,color:"#ad5600"},
-        {name:"Silver V",min:120,color:"#435f7a"},{name:"Silver IV",min:160,color:"#435f7a"},{name:"Silver III",min:200,color:"#435f7a"},{name:"Silver II",min:240,color:"#435f7a"},{name:"Silver I",min:280,color:"#435f7a"},
-        {name:"Gold V",min:300,color:"#ec9a00"},{name:"Gold IV",min:360,color:"#ec9a00"},{name:"Gold III",min:420,color:"#ec9a00"},{name:"Gold II",min:480,color:"#ec9a00"},{name:"Gold I",min:540,color:"#ec9a00"},
-        {name:"Platinum V",min:640,color:"#27e2a4"},{name:"Platinum IV",min:720,color:"#27e2a4"},{name:"Platinum III",min:800,color:"#27e2a4"},{name:"Platinum II",min:880,color:"#27e2a4"},{name:"Platinum I",min:960,color:"#27e2a4"},
-        {name:"Diamond V",min:1200,color:"#00b4fc"},{name:"Diamond IV",min:1300,color:"#00b4fc"},{name:"Diamond III",min:1400,color:"#00b4fc"},{name:"Diamond II",min:1500,color:"#00b4fc"},{name:"Diamond I",min:1600,color:"#00b4fc"},
-        {name:"Ruby V",min:2000,color:"#ff0062"},{name:"Ruby IV",min:2200,color:"#ff0062"},{name:"Ruby III",min:2400,color:"#ff0062"},{name:"Ruby II",min:2600,color:"#ff0062"},{name:"Ruby I",min:2800,color:"#ff0062"}
+        {name:"Bronze V",min:0,color:"#cd7f32"},{name:"Bronze IV",min:40,color:"#cd7f32"},{name:"Bronze III",min:60,color:"#cd7f32"},{name:"Bronze II",min:80,color:"#cd7f32"},{name:"Bronze I",min:100,color:"#cd7f32"},
+        {name:"Silver V",min:120,color:"#aaaaaa"},{name:"Silver IV",min:160,color:"#aaaaaa"},{name:"Silver III",min:200,color:"#aaaaaa"},{name:"Silver II",min:240,color:"#aaaaaa"},{name:"Silver I",min:280,color:"#aaaaaa"},
+        {name:"Gold V",min:300,color:"#ddaa1c"},{name:"Gold IV",min:360,color:"#ddaa1c"},{name:"Gold III",min:420,color:"#ddaa1c"},{name:"Gold II",min:480,color:"#ddaa1c"},{name:"Gold I",min:540,color:"#ddaa1c"},
+        {name:"Platinum V",min:640,color:"#00c8bb"},{name:"Platinum IV",min:720,color:"#00c8bb"},{name:"Platinum III",min:800,color:"#00c8bb"},{name:"Platinum II",min:880,color:"#00c8bb"},{name:"Platinum I",min:960,color:"#00c8bb"},
+        {name:"Diamond V",min:1200,color:"#74bffd"},{name:"Diamond IV",min:1300,color:"#74bffd"},{name:"Diamond III",min:1400,color:"#74bffd"},{name:"Diamond II",min:1500,color:"#74bffd"},{name:"Diamond I",min:1600,color:"#74bffd"},
+        {name:"Ruby V",min:2000,color:"#ff2d42"},{name:"Ruby IV",min:2200,color:"#ff2d42"},{name:"Ruby III",min:2400,color:"#ff2d42"},{name:"Ruby II",min:2600,color:"#ff2d42"},{name:"Ruby I",min:2800,color:"#ff2d42"}
     ];
 
     function getTier(rating) {
@@ -119,7 +119,7 @@
                 tr.innerHTML =
                     `<td class="rank-num ${rankClass}">${medal}</td>
                      <td class="rank-nick"><a href="profile.html?uid=${u.uid}">${u.nickname}</a></td>
-                     <td><span class="tier-badge tier-${tier.name.split(' ')[0].toLowerCase()}" style="color:${tier.color};border-color:${tier.color};">${tier.name}</span></td>
+                     <td><span class="tier-badge tier-${tier.name.split(' ')[0].toLowerCase()}">${tier.name}</span></td>
                      <td class="rank-rating">${u.rating}점</td>`;
                 tbody.appendChild(tr);
             });

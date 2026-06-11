@@ -512,7 +512,7 @@ _out`;
     els.resultBox.style.fontSize = "";
     els.resultBox.style.color    = "";
     showSuccess(els, "모든 테스트케이스 일치 ✅");
-    await awardRating(prob);
+    // 파이썬 검증 모드는 관리자 확인용 — 정답 처리(풀이 등록·레이팅·최초해결) 하지 않음
     resetBtn(els);
 }
 

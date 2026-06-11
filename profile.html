@@ -10,7 +10,11 @@
     <script>window.PROBLEMS = window.PROBLEMS || {};</script>
     <style>
         .profile-wrap { display:flex; justify-content:center; min-height:calc(100vh - 52px); margin-top:52px; padding:40px 20px; }
-        .profile-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:40px; width:100%; max-width:550px; box-shadow:0 8px 32px rgba(0,0,0,0.24); height:fit-content; }
+        .profile-card { position:relative; overflow:hidden; background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:40px; width:100%; max-width:550px; box-shadow:0 8px 32px rgba(0,0,0,0.24); height:fit-content; }
+        /* 업적 배경 영상 (data.bgVideo 있을 때만 표시) */
+        .profile-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; opacity:0.30; pointer-events:none; display:none; }
+        .profile-bg + #loading, #profile-content { position:relative; z-index:1; }
+        @media (prefers-reduced-motion: reduce) { .profile-bg { display:none !important; } }
         .profile-header-ui { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:24px; }
         .profile-nickname { font-size:2.2rem; font-weight:900; color:var(--text); letter-spacing:-1px; }
         .tier-tag { font-size:1.3rem; font-weight:800; padding:6px 14px; background:rgba(255,255,255,0.05); border-radius:30px; border:1px solid currentColor; }
@@ -44,6 +48,7 @@
 
 <div class="profile-wrap">
     <div class="profile-card">
+        <video id="profile-bg" class="profile-bg" autoplay muted loop playsinline></video>
         <div id="loading">데이터 로드 중...</div>
         <div id="profile-content" style="display:none;">
             <div class="profile-header-ui">
@@ -162,6 +167,15 @@
 
             const data     = snap.data();
             const nickname = data.nickname || data.email || "익명";
+
+            // 업적 배경 영상: users 문서에 bgVideo(URL) 있으면 카드 배경으로 재생
+            // (나중에 업적 시스템에서 이 필드를 자동 세팅하면 됨)
+            if (data.bgVideo) {
+                const v = document.getElementById('profile-bg');
+                v.src = data.bgVideo;
+                v.style.display = 'block';
+                v.play?.().catch(() => {});
+            }
             const solved   = [...new Set((data.solvedProblems || []).map(normId))];  // 옛 번호 → 새 번호
 
             await Promise.all(solved.map(loadScript));

@@ -15,7 +15,8 @@ if (el) {
         `<span class="topbar-sub">${subtitle}</span>` +
         (hasRanking ? `<button class="topbar-btn" onclick="location.href='judge.html'" style="margin-left:10px;border:none;">문제</button>` : '') +
         (hasRanking ? `<button class="topbar-btn" onclick="location.href='ranking.html'" style="margin-left:6px;border:none;">랭킹</button>` : '') +
-        (hasRanking ? `<button class="topbar-btn" onclick="location.href='shortcoding.html'" style="margin-left:6px;border:none;">숏코딩 랭킹</button>` : '') +
+        // 숏코딩 랭킹 임시 비활성화
+        // (hasRanking ? `<button class="topbar-btn" onclick="location.href='shortcoding.html'" style="margin-left:6px;border:none;">숏코딩 랭킹</button>` : '') +
         (hasSubmissions ? `<button class="topbar-btn" onclick="location.href='submissions.html'" style="margin-left:6px;border:none;">제출 현황</button>` : '') +
         (!noAuth
             ? `<div class="topbar-auth">` +
